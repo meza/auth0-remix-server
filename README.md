@@ -1,14 +1,11 @@
-<div style="text-align: center;">
-<h1>Auth0 Remix Server</h1>
-<p>
+<h1><p align="center">Auth0 Remix Server</p></h1>
+<p align="center">
 The missing library for authentication on the server with Remix
 </p>
-<p>
+<p align="center">
 <i>Please contribute!</i>
 </p>
-</div>
 
----
 
 ## What is this?
 
@@ -45,10 +42,10 @@ Some steps below might be familiar to anyone who attempted this with the [remix-
 > Environment variables are not required for the library, the examples only use them when configuring the authenticator.
 > I do recommend using environment variables for sensitive information like client secrets and domain names.
 > 
-> `AUTH0_DOMAIN` - The domain name of your Auth0 tenant
-> `AUTH0_CLIENT_ID` - The client ID of your Auth0 application
-> `AUTH0_CLIENT_SECRET` - The client secret of your Auth0 application
-> `APP_DOMAIN` - The domain name of your application (http://localhost:3333 for local development)
+> - `AUTH0_DOMAIN` - The domain name of your Auth0 tenant
+> - `AUTH0_CLIENT_ID` - The client ID of your Auth0 application
+> - `AUTH0_CLIENT_SECRET` - The client secret of your Auth0 application
+> - `APP_DOMAIN` - The domain name of your application (http://localhost:3333 for local development)
 
 #### 1. Create an instance of the authenticator in `src/auth.server.ts`
 

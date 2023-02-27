@@ -73,6 +73,7 @@ export const authenticator = new Index({
 
 ```tsx
 // src/routes/login.tsx
+import { Form } from '@remix-run/react';
 import { redirect } from '@remix-run/node';
 
 export default () => {

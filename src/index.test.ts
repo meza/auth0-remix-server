@@ -2,7 +2,7 @@
 import { redirect } from '@remix-run/node';
 import * as jose from 'jose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Auth0RemixServer } from './Auth0Remix.server.js';
+import { Auth0RemixServer } from './index.js';
 import { getCredentials, saveUserToSession } from './lib/session.js';
 import type { AppLoadContext } from '@remix-run/node';
 import type { Auth0RemixOptions } from './Auth0RemixTypes.js';
@@ -22,7 +22,7 @@ class JWTExpired extends Error {
   code = 'ERR_JWT_EXPIRED';
 }
 
-describe('Auth0Remix.server', () => {
+describe('Auth0 Remix Server', () => {
   /* eslint-disable camelcase */
   beforeEach<LocalTestContext>((context) => {
     vi.resetAllMocks();

@@ -54,10 +54,10 @@ Some steps below might be familiar to anyone who attempted this with the [remix-
 
 ```ts
 // src/auth.server.ts
-import { Auth0RemixServer } from '@meza/auth0-remix-server';
+import { Index } from '@meza/auth0-remix-server';
 import { getSessionStorage } from './sessionStorage.server'; // this is where your session storage is configured
 
-export const authenticator = new Auth0RemixServer({
+export const authenticator = new Index({
   clientDetails: {
     domain: process.env.AUTH0_DOMAIN,
     clientID: process.env.AUTH0_CLIENT_ID,

@@ -10,24 +10,14 @@
     "emitDeclarationOnly": false,
     "skipDefaultLibCheck": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
     "outDir": "./dist/esm",
     "declarationDir": "./dist/types",
     "noPropertyAccessFromIndexSignature": false,
-    "isolatedModules": true,
-    "sourceRoot": "src",
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/types"
-    ]
+    "isolatedModules": true
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules"
-  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"],
   "ts-node": {
     "files": true
   }

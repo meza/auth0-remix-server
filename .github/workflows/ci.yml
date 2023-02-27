@@ -1,8 +1,6 @@
 name: Verify
 
-on:
-  push:
-    branches: [ main, alpha, beta ]
+on: [ push, pull_request ]
 
 env:
   LEFTHOOK: 0

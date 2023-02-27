@@ -1,0 +1,34 @@
+{
+  "extends": "@meza/tsconfig-base",
+  "compilerOptions": {
+    "tsBuildInfoFile": ".cache/.esm.tsbuildinfo",
+    "lib": ["DOM", "ESNext"],
+    "preserveSymlinks": false,
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "emitDeclarationOnly": false,
+    "skipDefaultLibCheck": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true,
+    "outDir": "./dist/esm",
+    "declarationDir": "./dist/types",
+    "noPropertyAccessFromIndexSignature": false,
+    "isolatedModules": true,
+    "sourceRoot": "src",
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ]
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "ts-node": {
+    "files": true
+  }
+}

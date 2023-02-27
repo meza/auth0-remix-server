@@ -1,0 +1,90 @@
+{
+  "version": "0.0.0-dev",
+  "name": "@meza/auth0-remix-server",
+  "bugs": {
+    "url": "https://github.com/meza/auth0-remix-server/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meza/auth0-remix-server.git"
+  },
+  "homepage": "https://github.com/meza/auth0-remix-server#readme",
+  "author": "meza",
+  "private": false,
+  "sideEffects": false,
+  "scripts": {
+    "build": "npm-run-all build:cjs build:mjs",
+    "build:cjs": "tsc -p ./tsconfig.cjs.json",
+    "build:mjs": "tsc -p tsconfig.json",
+    "ci": "run-s lint report",
+    "lint": "run-p \"lint:*\"",
+    "lint:eslint": "eslint --ext .ts,.tsx,.json src",
+    "lint:typecheck": "tsc -p tsconfig.json --noEmit",
+    "report": "vitest --run --coverage",
+    "test": "vitest --run"
+  },
+  "publishConfig": {
+    "access": "public",
+    "ignore": [
+      "!dist/",
+      "src",
+      "tsconfig*"
+    ]
+  },
+  "exports": {
+    "types": "./dist/types/index.d.ts",
+    "import": "./dist/esm/index.js",
+    "require": "./dist/cjs/index.js"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@commitlint/cli": "17.4.4",
+    "@commitlint/config-conventional": "17.4.4",
+    "@commitlint/prompt-cli": "17.4.4",
+    "@meza/tsconfig-base": "^1.1.0",
+    "@semantic-release/commit-analyzer": "^9.0.2",
+    "@semantic-release/github": "^8.0.7",
+    "@semantic-release/npm": "9.0.2",
+    "@semantic-release/release-notes-generator": "^10.0.3",
+    "@types/is-ci": "^3.0.0",
+    "@types/node": "^18.14.2",
+    "@typescript-eslint/eslint-plugin": "^5.54.0",
+    "@typescript-eslint/parser": "^5.54.0",
+    "@vitest/coverage-c8": "^0.28.5",
+    "c8": "7.13.0",
+    "eslint": "^8.35.0",
+    "eslint-config-tailored-tunes": "^5.0.2",
+    "eslint-plugin-jest": "^25.7.0",
+    "eslint-plugin-json": "^3.1.0",
+    "eslint-plugin-security": "^1.7.1",
+    "is-ci": "^3.0.1",
+    "npm-run-all": "^4.1.5",
+    "npmignore": "^0.3.0",
+    "semantic-release": "^20.1.0",
+    "semantic-release-export-data": "^1.0.1",
+    "typescript": "^4.9.5",
+    "vite": "^4.1.4",
+    "vitest": "^0.28.5"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ],
+    "rules": {
+      "header-max-length": [
+        0,
+        "always",
+        100
+      ]
+    }
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "peerDependencies": {
+    "@remix-run/node": "1.x"
+  },
+  "dependencies": {
+    "jose": "^4.13.0"
+  }
+}

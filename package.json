@@ -1,6 +1,6 @@
 {
   "version": "0.0.0-dev",
-  "name": "@meza/auth0-remix-server",
+  "name": "auth0-remix-server",
   "bugs": {
     "url": "https://github.com/meza/auth0-remix-server/issues"
   },

@@ -34,7 +34,7 @@ with how they work.
 ### Installation
 
 ```bash
-npm install @meza/auth0-remix-server
+npm install auth0-remix-server
 ```
 
 ### Usage
@@ -54,7 +54,7 @@ Some steps below might be familiar to anyone who attempted this with the [remix-
 
 ```ts
 // src/auth.server.ts
-import { Index } from '@meza/auth0-remix-server';
+import { Index } from 'auth0-remix-server';
 import { getSessionStorage } from './sessionStorage.server'; // this is where your session storage is configured
 
 export const authenticator = new Index({

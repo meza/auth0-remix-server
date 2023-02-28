@@ -14,6 +14,11 @@ This is a library for authentication with [Auth0](https://auth0.com/) on the ser
 It's built as part of the efforts to deliver the [trance-stack](https://github.com/meza/trance-stack/). As such, the initial
 release of this library only covers the MVP needs of the stack. It will keep evolving over time and with your help.
 
+## Why?
+
+Some of the other solutions out there seem to miss the actual token validation and basic security measures. This library attempts
+to bridge that gap and also provide a convenient interface to use.
+
 ## What is still missing?
 
 - [ ] utilise the STATE parameter to prevent CSRF

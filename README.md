@@ -56,10 +56,10 @@ Some steps below might be familiar to anyone who attempted this with the [remix-
 
 ```ts
 // src/auth.server.ts
-import { Index } from 'auth0-remix-server';
+import { Auth0RemixServer } from 'auth0-remix-server';
 import { getSessionStorage } from './sessionStorage.server'; // this is where your session storage is configured
 
-export const authenticator = new Index({
+export const authenticator = new Auth0RemixServer({
   clientDetails: {
     domain: process.env.AUTH0_DOMAIN,
     clientID: process.env.AUTH0_CLIENT_ID,

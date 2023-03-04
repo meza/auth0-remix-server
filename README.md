@@ -178,7 +178,8 @@ described in the [Validating Tokens](#validating-tokens) section.
 But if you want to decode the tokens and use the contents, you should use the `decodeToken` method .
 
 ```ts
-import { authenticator, Token } from '../auth.server';
+import { authenticator } from './auth.server';
+import { Token } from 'auth0-remix-server';
 
 const decodedToken = await authenticator.decodeToken('your id token here', Token.ID);
 ```
@@ -200,7 +201,8 @@ They both take a `Token` as a second argument because the validation process is 
 The `isValid` function is a quick yes/no answer to whether or not the token is valid.
 
 ```ts
-import { authenticator, Token } from '../auth.server';
+import { authenticator } from './auth.server';
+import { Token } from 'auth0-remix-server';
 
 await authenticator.isValid('your access token here', Token.AccessToken); // returns true or false
 ```
@@ -208,7 +210,8 @@ await authenticator.isValid('your access token here', Token.AccessToken); // ret
 The `verifyToken` function will resolve if the token is valid and will reject if it's not.
 
 ```ts
-import { authenticator, Token } from '../auth.server';
+import { authenticator } from './auth.server';
+import { Token } from 'auth0-remix-server';
 
 try {
   await authenticator.verifyToken('your id token here', Token.ID);

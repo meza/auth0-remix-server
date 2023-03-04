@@ -4,6 +4,8 @@ export interface Auth0UserProfile {
   [key: string]: string | boolean | number | object;
 }
 
+export type Auth0CredentialsCallback = (tokens: UserCredentials) => void;
+
 export interface UserCredentials {
   accessToken: string;
   refreshToken?: string;
@@ -60,6 +62,7 @@ export interface Auth0RemixOptions {
   refreshTokenRotationEnabled?: boolean;
   clientDetails: Omit<ClientCredentials, 'audience'> & { audience?: string; domain: string; };
   session: Omit<SessionStore, 'key'> & { key?: string; };
+  credentialsCallback?: Auth0CredentialsCallback;
 }
 
 export interface HandleCallbackOptions {

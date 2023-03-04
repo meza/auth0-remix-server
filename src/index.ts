@@ -3,7 +3,15 @@ import * as jose from 'jose';
 import { ensureDomain } from './lib/ensureDomainFormat.js';
 import { getCredentials, saveUserToSession } from './lib/session.js';
 import { transformUserData } from './lib/transformUserData.js';
-import type { Auth0RemixOptions, ClientCredentials, HandleCallbackOptions, SessionStore, UserCredentials, UserProfile } from './Auth0RemixTypes.js';
+import type {
+  Auth0RemixOptions,
+  Auth0CredentialsCallback,
+  ClientCredentials,
+  HandleCallbackOptions,
+  SessionStore,
+  UserCredentials,
+  UserProfile
+} from './Auth0RemixTypes.js';
 import type { AppLoadContext } from '@remix-run/node';
 
 /**
@@ -11,7 +19,6 @@ import type { AppLoadContext } from '@remix-run/node';
  * - [ ] utilise the STATE parameter to prevent CSRF
  * - [ ] failed things should remove the user from the session
  * - [ ] see if we can handle the callback while maintaining the session from before the login
- * - [ ] create the callbacks for the id token and the refresh tokens
  * - [ ] opt out of the session handling
  * - [ ] enable register with passing ?screen_hint=signup to the authorize endpoint
  */
@@ -33,6 +40,7 @@ export class Auth0RemixServer {
   private readonly clientCredentials: ClientCredentials;
   private readonly session: SessionStore;
   private readonly auth0Urls: Auth0Urls;
+  private readonly credentialsCallback: Auth0CredentialsCallback;
 
   constructor(auth0RemixOptions: Auth0RemixOptions) {
     this.domain = ensureDomain(auth0RemixOptions.clientDetails.domain);
@@ -66,6 +74,8 @@ export class Auth0RemixServer {
       jwksURL: `${this.domain}/.well-known/jwks.json`,
       openIDConfigurationURL: `${this.domain}/.well-known/openid-configuration`
     };
+
+    this.credentialsCallback = auth0RemixOptions.credentialsCallback || (() => {});
 
     this.jwks = jose.createRemoteJWKSet(new URL(this.auth0Urls.jwksURL));
   }
@@ -130,11 +140,9 @@ export class Auth0RemixServer {
 
     if (this.refreshTokenRotationEnabled) {
       userData.refreshToken = data.refresh_token;
-    } else {
-      // callUserRefreshTokenCallback(userData.refreshToken)
     }
 
-    // callUserIdTokenCallback(data.id_token)
+    this.credentialsCallback({ ...userData, refreshToken: data.refresh_token });
 
     if (options.onSuccessRedirect) {
       const headers = await saveUserToSession(request, userData, this.session);
@@ -225,11 +233,9 @@ export class Auth0RemixServer {
 
     if (this.refreshTokenRotationEnabled) {
       userData.refreshToken = data.refresh_token;
-    } else {
-      // callUserRefreshTokenCallback(userData.refreshToken)
     }
 
-    // callUserIdTokenCallback(data.id_token)
+    this.credentialsCallback({ ...userData, refreshToken: data.refresh_token });
 
     return userData;
   }

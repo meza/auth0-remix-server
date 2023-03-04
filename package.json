@@ -1,6 +1,8 @@
 {
   "version": "0.0.0-dev",
   "name": "auth0-remix-server",
+  "license": "GPL-3.0-or-later",
+  "description": "A secure Auth0 integration for server-side Remix apps",
   "bugs": {
     "url": "https://github.com/meza/auth0-remix-server/issues"
   },

@@ -1,10 +1,10 @@
 /* eslint-disable max-nested-callbacks */
+import type { AppLoadContext } from '@remix-run/node';
 import { redirect } from '@remix-run/node';
 import * as jose from 'jose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Auth0RemixServer } from './index.js';
+import { Auth0RemixServer, Token } from './index.js';
 import { getCredentials, saveUserToSession } from './lib/session.js';
-import type { AppLoadContext } from '@remix-run/node';
 import type { Auth0RemixOptions } from './Auth0RemixTypes.js';
 
 vi.mock('@remix-run/node');
@@ -658,6 +658,137 @@ describe('Auth0 Remix Server', () => {
             });
           });
         });
+      });
+    });
+  });
+
+  describe('the verification functions', () => {
+    it<LocalTestContext>('can successfully verify an access token', async ({ authOptions }) => {
+      vi.mocked(jose.jwtVerify).mockResolvedValueOnce({} as never);
+      authOptions.clientDetails.domain = 'test.domain.com';
+      authOptions.clientDetails.audience = 'verification-audience';
+      const authorizer = new Auth0RemixServer(authOptions);
+      const actual = await authorizer.isValid('test-token', Token.ACCESS);
+
+      expect(actual).toBeTruthy();
+
+      expect(jose.jwtVerify).toHaveBeenCalledWith('test-token', 'jwkSet', {
+        issuer: 'https://test.domain.com/',
+        audience: 'verification-audience'
+      });
+    });
+
+    it<LocalTestContext>('can report a failed access token validity', async ({ authOptions }) => {
+      vi.mocked(jose.jwtVerify).mockRejectedValueOnce({} as never);
+      authOptions.clientDetails.domain = 'test.domain.com';
+      authOptions.clientDetails.audience = 'verification-audience';
+      const authorizer = new Auth0RemixServer(authOptions);
+      const actual = await authorizer.isValid('test-token', Token.ACCESS);
+
+      expect(actual).toBeFalsy();
+
+      expect(jose.jwtVerify).toHaveBeenCalledWith('test-token', 'jwkSet', {
+        issuer: 'https://test.domain.com/',
+        audience: 'verification-audience'
+      });
+    });
+
+    it<LocalTestContext>('can successfully verify an id token', async ({ authOptions }) => {
+      vi.mocked(jose.jwtVerify).mockResolvedValueOnce({} as never);
+      authOptions.clientDetails.domain = 'test.domain.com';
+      authOptions.clientDetails.clientID = 'verification-clientID';
+      const authorizer = new Auth0RemixServer(authOptions);
+      const actual = await authorizer.isValid('test-token', Token.ID);
+
+      expect(actual).toBeTruthy();
+
+      expect(jose.jwtVerify).toHaveBeenCalledWith('test-token', 'jwkSet', {
+        issuer: 'https://test.domain.com/',
+        audience: 'verification-clientID'
+      });
+    });
+
+    it<LocalTestContext>('can report a failed id token validity', async ({ authOptions }) => {
+      vi.mocked(jose.jwtVerify).mockRejectedValueOnce({} as never);
+      authOptions.clientDetails.domain = 'test.domain.com';
+      authOptions.clientDetails.clientID = 'verification-clientID';
+      const authorizer = new Auth0RemixServer(authOptions);
+      const actual = await authorizer.isValid('test-token', Token.ID);
+
+      expect(actual).toBeFalsy();
+
+      expect(jose.jwtVerify).toHaveBeenCalledWith('test-token', 'jwkSet', {
+        issuer: 'https://test.domain.com/',
+        audience: 'verification-clientID'
+      });
+    });
+
+    it<LocalTestContext>('can report the correct error when the token is invalid', async ({ authOptions }) => {
+
+      vi.mocked(jose.jwtVerify).mockRejectedValueOnce(new Error('invalid token'));
+      const authorizer = new Auth0RemixServer(authOptions);
+
+      await expect(authorizer.verifyToken('test-token', Token.ID)).rejects.toThrowError('invalid token');
+
+    });
+  });
+
+  describe('The secure decoding of the tokens', () => {
+    it<LocalTestContext>('can report the correct error when the token is not valid', async ({ authOptions }) => {
+
+      vi.mocked(jose.jwtVerify).mockRejectedValueOnce(new Error('another invalid token'));
+      const authorizer = new Auth0RemixServer(authOptions);
+
+      await expect(authorizer.decodeToken('test-token', Token.ID)).rejects.toThrowError('another invalid token');
+    });
+
+    it<LocalTestContext>('can successfully decode an access token', async ({ authOptions }) => {
+      authOptions.clientDetails.domain = 'test.domain.com';
+      authOptions.clientDetails.audience = 'verification-audience';
+
+      vi.mocked(jose.jwtVerify).mockResolvedValueOnce({
+        payload: {
+          sub: 'test-subject',
+          aud: 'verification-audience'
+        }
+      } as never);
+
+      const authorizer = new Auth0RemixServer(authOptions);
+      const actual = await authorizer.decodeToken('test-token', Token.ACCESS);
+
+      expect(actual).toEqual({
+        sub: 'test-subject',
+        aud: 'verification-audience'
+      });
+
+      expect(jose.jwtVerify).toHaveBeenCalledWith('test-token', 'jwkSet', {
+        issuer: 'https://test.domain.com/',
+        audience: 'verification-audience'
+      });
+    });
+
+    it<LocalTestContext>('can successfully decode an ID token', async ({ authOptions }) => {
+      authOptions.clientDetails.domain = 'test.domain.com';
+      authOptions.clientDetails.clientID = 'verification-clientID';
+
+      vi.mocked(jose.jwtVerify).mockResolvedValueOnce({
+        payload: {
+          sub: 'test-subject',
+          name: 'test-name'
+        }
+      } as never);
+
+      const authorizer = new Auth0RemixServer(authOptions);
+      const actual = await authorizer.decodeToken('test-token', Token.ID);
+
+      expect(actual).toEqual({
+        sub: 'test-subject',
+        name: 'test-name'
+      });
+
+      expect(jose.jwtVerify).toHaveBeenCalledWith('test-token', 'jwkSet', {
+        issuer: 'https://test.domain.com/',
+        audience: 'verification-clientID'
       });
     });
   });

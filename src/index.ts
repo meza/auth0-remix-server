@@ -10,7 +10,8 @@ import type {
   HandleCallbackOptions,
   SessionStore,
   UserCredentials,
-  UserProfile
+  UserProfile,
+  TokenError
 } from './Auth0RemixTypes.js';
 import type { AppLoadContext } from '@remix-run/node';
 
@@ -22,6 +23,11 @@ import type { AppLoadContext } from '@remix-run/node';
  * - [ ] opt out of the session handling
  * - [ ] enable register with passing ?screen_hint=signup to the authorize endpoint
  */
+
+export enum Token {
+  ID = 'id',
+  ACCESS = 'access'
+}
 
 interface Auth0Urls {
   authorizationURL: string;
@@ -78,6 +84,27 @@ export class Auth0RemixServer {
     this.credentialsCallback = auth0RemixOptions.credentialsCallback || (() => {});
 
     this.jwks = jose.createRemoteJWKSet(new URL(this.auth0Urls.jwksURL));
+  }
+
+  public async decodeToken(token: string, type: Token) {
+    const { payload } = await jose.jwtVerify(token, this.jwks, {
+      issuer: this.domain + '/',
+      audience: type === Token.ACCESS ? this.clientCredentials.audience : this.clientCredentials.clientID
+    });
+    return payload;
+  }
+
+  public async verifyToken(token: string, type: Token) {
+    await this.decodeToken(token, type);
+  }
+
+  public async isValid(token: string, type: Token) {
+    try {
+      await this.verifyToken(token, type);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   public authorize(forceLogin = false) {
@@ -172,16 +199,12 @@ export class Auth0RemixServer {
     }
 
     try {
-
-      await jose.jwtVerify(credentials.accessToken, this.jwks, {
-        issuer: this.domain + '/',
-        audience: this.clientCredentials.audience
-      });
+      await this.decodeToken(credentials.accessToken, Token.ACCESS);
 
       return await this.getUserProfile(credentials);
 
     } catch (error) {
-      if ((error as Error & {code: string;}).code === 'ERR_JWT_EXPIRED') {
+      if ((error as TokenError).code === 'ERR_JWT_EXPIRED') {
         if (!context.refresh) {
           context.refresh = this.refreshCredentials(credentials);
           const result = (await context.refresh) as UserCredentials;

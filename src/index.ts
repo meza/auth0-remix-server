@@ -86,7 +86,7 @@ export class Auth0RemixServer {
     this.jwks = jose.createRemoteJWKSet(new URL(this.auth0Urls.jwksURL));
   }
 
-  private async decodeToken(token: string, type: Token) {
+  public async decodeToken(token: string, type: Token) {
     const { payload } = await jose.jwtVerify(token, this.jwks, {
       issuer: this.domain + '/',
       audience: type === Token.ACCESS ? this.clientCredentials.audience : this.clientCredentials.clientID

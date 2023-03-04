@@ -168,6 +168,27 @@ export default () => {
 
 
 ```
+
+## Securely decoding tokens
+
+If you're using the contents of the tokens, you should always make sure that they're valid and haven't been tampered with.
+You can quickly verify the validity of the tokens by using the `verifyToken` and `isValid` methods on the authenticator
+described in the [Validating Tokens](#validating-tokens) section.
+
+But if you want to decode the tokens and use the contents, you should use the `decodeToken` method .
+
+```ts
+import { authenticator, Token } from '../auth.server';
+
+const decodedToken = await authenticator.decodeToken('your id token here', Token.ID);
+```
+
+The `decodedToken` will contain the contents of the IDToken but at this point you can be sure that it passed
+the cryptographic validation checks.
+
+If the verification fails, the `decodeToken` method will throw the same set of errors as the `verifyToken` method throws.
+You can see the list of errors in the [Errors](#errors) section.
+
 ## Validating Tokens
 
 ID and Access Tokens can be decoded easily by anyone but in order to make sure that the data hasn't been

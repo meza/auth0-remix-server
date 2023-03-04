@@ -255,6 +255,51 @@ describe('Auth0 Remix Server', () => {
           `);
 
         });
+
+        it<LocalTestContext>('calls the token escape hatch', async ({ authOptions }) => {
+          const escapeHatch = vi.fn();
+
+          authOptions.session = {
+            store: 'sessionStore',
+            key: 'sessionKey'
+          } as never;
+          authOptions.credentialsCallback = escapeHatch;
+          const auth0Response = {
+            access_token: 'test-access-token4',
+            id_token: 'test-id-token4',
+            expires_in: 600,
+            refresh_token: 'test-refresh-token4'
+          };
+
+          vi.mocked(fetch).mockResolvedValue({
+            ok: true, // return a non-ok response
+            json: () => Promise.resolve(auth0Response)
+          } as never);
+
+          const formData = new FormData();
+          formData.append('code', 'test-code');
+          const request = new Request('https://it-doesnt-matter.com', {
+            method: 'POST',
+            body: formData
+          });
+
+          vi.mocked(saveUserToSession).mockResolvedValue({
+            'some-cookie': 'data'
+          });
+
+          const authorizer = new Auth0RemixServer(authOptions);
+          await expect(authorizer.handleCallback(request, {
+            onSuccessRedirect: 'https://success-login-redirect.com'
+          })).rejects.toThrowError(redirectError); // a redirect happened
+
+          expect(escapeHatch).toHaveBeenCalledWith({
+            accessToken: 'test-access-token4',
+            refreshToken: 'test-refresh-token4',
+            expiresIn: 600,
+            lastRefreshed: 0,
+            expiresAt: 600000
+          });
+        });
       });
     });
   });
@@ -554,6 +599,39 @@ describe('Auth0 Remix Server', () => {
               }
             `);
             expect(Object.keys(saveUserToSessionCall[1])).toContain('refreshToken');
+
+          });
+
+          it<LocalTestContext>('calls the credentials escape hatch callback', async ({ authOptions, appLoadContext }) => {
+            const escapeHatch = vi.fn();
+            vi.mocked(fetch).mockResolvedValue({
+              ok: true,
+              json: () => Promise.resolve({
+                access_token: 'new-access-token3',
+                refresh_token: 'new-refresh-token3',
+                expires_in: 3000
+              })
+            } as never);
+
+            vi.mocked(saveUserToSession).mockResolvedValueOnce({
+              'a-header2': 'a-value2'
+            } as never);
+
+            const request = new Request('https://it-doesnt-matter.com');
+            authOptions.refreshTokenRotationEnabled = true;
+            authOptions.credentialsCallback = escapeHatch;
+            const authorizer = new Auth0RemixServer(authOptions);
+
+            /** Execute the test */
+            await expect(authorizer.getUser(request, appLoadContext)).rejects.toThrowError(redirectError); // a redirect happened
+
+            expect(escapeHatch).toHaveBeenCalledWith({
+              accessToken: 'new-access-token3',
+              refreshToken: 'new-refresh-token3',
+              expiresIn: 3000,
+              expiresAt: 3000000,
+              lastRefreshed: 0
+            });
 
           });
 

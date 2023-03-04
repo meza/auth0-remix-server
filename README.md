@@ -16,7 +16,7 @@ release of this library only covers the MVP needs of the stack. It will keep evo
 
 ## Why?
 
-Some of the other solutions out there seem to miss the actual token validation and basic security measures. This library attempts
+Other solutions out there seem to miss the actual token validation and basic security measures. This library attempts
 to bridge that gap and also provide a convenient interface to use.
 
 ## What is still missing?
@@ -69,8 +69,12 @@ export const authenticator = new Auth0RemixServer({
   refreshTokenRotationEnabled: true,
   failedLoginRedirect: '/',
   session: {
-    store: getSessionStorage()
-  }
+    store: getSessionStorage(),
+    key: 'user' //optional
+  },
+  credentialsCallback: (credentials) => {
+      // this gets called upon a successful callback or a credentials refresh event
+  } //optional
 });
 ```
 
@@ -166,6 +170,25 @@ export default () => {
 ```
 
 ## Gotchas
+
+### Accessing the tokens
+
+When you instantiate the authenticator, you can pass in a `credentialsCallback` function. This function will be called
+when the user is successfully authenticated or when the access token is refreshed.
+
+It will contain the credentials obtained from Auth0.
+
+The credentials object looks like this:
+
+```
+{
+  accessToken: string; // the access token
+  refreshToken: string; // the refresh token
+  expiresIn: number; // the number of seconds until the access token expires
+  expiresAt: number; // the timestamp when the access token expires
+  lastRefreshed: number; // the timestamp when the access token was last refreshed
+}
+```
 
 ### Refresh Token Rotation
 

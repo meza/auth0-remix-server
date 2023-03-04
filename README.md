@@ -168,6 +168,48 @@ export default () => {
 
 
 ```
+## Validating Tokens
+
+ID and Access Tokens can be decoded easily by anyone but in order to make sure that the data hasn't been
+tampered with, it's advisable to validate the tokens against the public keys provided by Auth0.
+
+You can do this by using the `verifyToken` and the `isValid` methods on the authenticator.
+They both take a `Token` as a second argument because the validation process is different for each type of token.
+
+The `isValid` function is a quick yes/no answer to whether or not the token is valid.
+
+```ts
+import { authenticator, Token } from '../auth.server';
+
+await authenticator.isValid('your access token here', Token.AccessToken); // returns true or false
+```
+
+The `verifyToken` function will resolve if the token is valid and will reject if it's not.
+
+```ts
+import { authenticator, Token } from '../auth.server';
+
+try {
+  await authenticator.verifyToken('your id token here', Token.ID);
+} catch (error) {
+  // handle the error
+  const { code, message } = error as TokenError;
+}
+```
+
+## Errors
+
+The verification errors each have a `code` property that you can use to determine what went wrong.
+
+| Code                            | Description                        |
+|---------------------------------|------------------------------------|
+| ERR_JWT_CLAIM_VALIDATION_FAILED | The JWT claim validation failed.   |
+| ERR_JWT_EXPIRED                 | The JWT has expired.               |
+| ERR_JWT_INVALID                 | The JWT is invalid.                |
+| ERR_JWKS_INVALID                | The JWKS is invalid.               |
+| ERR_JWKS_NO_MATCHING_KEY        | No matching key was found.         |
+| ERR_JWKS_MULTIPLE_MATCHING_KEYS | Multiple matching keys were found. |
+
 
 ## Gotchas
 

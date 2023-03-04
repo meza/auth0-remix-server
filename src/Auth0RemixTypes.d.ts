@@ -1,4 +1,7 @@
 import type { SessionStorage } from '@remix-run/node';
+// import type { JOSEError } from 'jose/dist/types/util/errors';
+
+export type TokenError = Error & { code: string; };
 
 export interface Auth0UserProfile {
   [key: string]: string | boolean | number | object;

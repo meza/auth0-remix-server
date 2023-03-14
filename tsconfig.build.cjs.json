@@ -1,5 +1,5 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.build.json",
   "compilerOptions": {
     "tsBuildInfoFile": ".cache/.cjs.tsbuildinfo",
     "module": "CommonJS",

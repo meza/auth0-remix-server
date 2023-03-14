@@ -4,3 +4,4 @@ node_modules
 reports
 .cache
 .npmignore
+*.tgz

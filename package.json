@@ -74,6 +74,7 @@
     "@semantic-release/github": "8.0.7",
     "@semantic-release/npm": "10.0.2",
     "@semantic-release/release-notes-generator": "10.0.3",
+    "@total-typescript/ts-reset": "0.4.2",
     "@types/is-ci": "3.0.0",
     "@types/node": "18.15.11",
     "@typescript-eslint/eslint-plugin": "5.57.1",

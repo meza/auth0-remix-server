@@ -22,20 +22,19 @@
   "private": false,
   "sideEffects": false,
   "type": "module",
-  "main": "./dist/cjs/index.cjs",
-  "types": "./dist/types/index.d.ts",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.cjs"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "scripts": {
     "prebuild": "rimraf ./dist .cache",
     "build": "npm-run-all build:cjs build:mjs",
-    "build:cjs": "tsc -p ./tsconfig.build.cjs.json",
-    "postbuild:cjs": "renamer --find '/.js(.map)?/' --replace '.cjs$1' 'dist/cjs/**/*'",
-    "build:mjs": "tsc -p tsconfig.build.json",
+    "build:cjs": "tsup --format cjs --dts src/index.ts 'src/**/!(*.test).ts'",
+    "build:mjs": "tsup --format esm --dts src/index.ts 'src/**/!(*.test).ts'",
     "ci": "run-s lint report",
     "lint": "run-p \"lint:*\"",
     "lint:eslint": "eslint --ext .ts,.tsx,.json src",
@@ -84,6 +83,7 @@
     "rimraf": "^4.4.0",
     "semantic-release": "^20.1.0",
     "semantic-release-export-data": "^1.0.1",
+    "tsup": "^6.6.3",
     "typescript": "^4.9.5",
     "vite": "^4.1.4",
     "vitest": "^0.29.0"

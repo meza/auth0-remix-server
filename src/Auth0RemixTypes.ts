@@ -1,10 +1,21 @@
 import type { SessionStorage } from '@remix-run/node';
-// import type { JOSEError } from 'jose/dist/types/util/errors';
+import type { JsonObject, JsonValue, SetOptional } from 'type-fest';
+// import type { errors as JoseErrors } from 'jose';
 
 export type TokenError = Error & { code: string; };
 
-export interface Auth0UserProfile {
-  [key: string]: string | boolean | number | object;
+export interface Auth0UserProfile extends JsonObject {
+  sub: string;
+  name: string;
+  picture: string;
+  nickname: string;
+  updatedAt: string;
+}
+
+export interface Auth0Credentials extends JsonObject {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
 }
 
 export interface UserCredentials {
@@ -42,9 +53,9 @@ export interface UserProfile {
   phoneNumberVerified?: boolean;
   address?: {
     country: string;
-  },
+  };
   updatedAt: string;
-  [key: string]: string | boolean | number | object | undefined
+  [key: string]: JsonValue;
 }
 
 export interface ClientCredentials {
@@ -63,8 +74,8 @@ export interface Auth0RemixOptions {
   callbackURL: string;
   failedLoginRedirect: string;
   refreshTokenRotationEnabled?: boolean;
-  clientDetails: Omit<ClientCredentials, 'audience'> & { audience?: string; domain: string; };
-  session: Omit<SessionStore, 'key'> & { key?: string; };
+  clientDetails: SetOptional<ClientCredentials, 'audience'> & { domain: string };
+  session: SetOptional<SessionStore, 'key'>;
   credentialsCallback?: Auth0CredentialsCallback;
 }
 

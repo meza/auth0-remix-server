@@ -85,5 +85,18 @@ describe('The session helper', () => {
       expect(sessionStore.store.getSession).toHaveBeenCalledWith('session-cookie');
       expect(sessionSpy).toHaveBeenCalledWith('session-key');
     });
+
+    it('should return null if no session found in cookie', async () => {
+      const request = new Request('https://example.com');
+      const sessionStore: SessionStore = {
+        store: {
+          getSession: vi.fn()
+        }
+      } as never;
+      vi.mocked(sessionStore.store.getSession).mockResolvedValue(createSession());
+
+      const actual = await getCredentials(request, sessionStore);
+      expect(actual).toBe(null);
+    });
   });
 });

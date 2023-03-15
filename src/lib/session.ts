@@ -14,9 +14,11 @@ export const saveUserToSession = async (request: Request, userCredentials: UserC
   return headers;
 };
 
-export const getCredentials = async (request: Request, sessionStore: SessionStore): Promise<UserCredentials> => {
+const ensureCredentials = (o: unknown): UserCredentials | null =>
+  typeof o === 'object' && typeof (o as AnyObject).accessToken === 'string' ? (o as UserCredentials) : null;
+
+export const getCredentials = async (request: Request, sessionStore: SessionStore): Promise<UserCredentials | null> => {
   const cookie = request.headers.get('Cookie');
   const session = await sessionStore.store.getSession(cookie);
-  const credentials = session.get(sessionStore.key);
-  return credentials;
+  return ensureCredentials(session.get(sessionStore.key));
 };

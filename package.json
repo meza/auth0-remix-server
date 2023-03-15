@@ -31,7 +31,6 @@
     }
   },
   "scripts": {
-    "prebuild": "rimraf ./dist .cache",
     "build": "run-s build:cjs build:mjs",
     "build:cjs": "tsup --no-splitting --format cjs --dts src/index.ts 'src/**/!(*.test).ts'",
     "build:mjs": "tsup --no-splitting --format esm --dts src/index.ts 'src/**/!(*.test).ts'",

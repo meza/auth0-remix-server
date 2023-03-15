@@ -7,8 +7,6 @@ export interface Auth0UserProfile {
   [key: string]: string | boolean | number | object;
 }
 
-export type Auth0CredentialsCallback = (tokens: UserCredentials) => void;
-
 export interface UserCredentials {
   accessToken: string;
   refreshToken?: string;
@@ -16,6 +14,8 @@ export interface UserCredentials {
   expiresAt: number;
   lastRefreshed: number;
 }
+
+export type Auth0CredentialsCallback = (tokens: UserCredentials) => void;
 
 /**
  * @see https://auth0.com/docs/api/authentication#user-profile

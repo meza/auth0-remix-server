@@ -22,6 +22,8 @@ pre-commit:
       run: npm run lint
     test:
       run: npm run report
+    publint:
+      run: npm run clean && npm run build && npx publint
 post-merge:
   commands:
     install-deps-postmerge:

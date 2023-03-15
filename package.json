@@ -30,12 +30,17 @@
       "require": "./dist/index.cjs"
     }
   },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "build": "run-s build:cjs build:mjs",
     "build:cjs": "tsup --no-splitting --format cjs --dts src/index.ts 'src/**/!(*.test).ts'",
     "build:mjs": "tsup --no-splitting --format esm --dts src/index.ts 'src/**/!(*.test).ts'",
     "ci": "run-s lint report",
-    "clean": "rimraf ./dist .cache",
+    "clean": "rimraf ./dist .cache .npmignore",
     "lint": "run-p lint:*",
     "lint:eslint": "eslint --ext .ts,.tsx,.json src",
     "lint:typecheck": "tsc -p tsconfig.json --noEmit",

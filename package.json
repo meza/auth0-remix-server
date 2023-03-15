@@ -118,6 +118,7 @@
     "@remix-run/node": "1.15.0"
   },
   "dependencies": {
+    "camelize-ts": "2.3.0",
     "jose": "4.13.1"
   }
 }

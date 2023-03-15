@@ -1,31 +1,35 @@
+/* eslint-disable camelcase */
 import { describe, expect, it } from 'vitest';
 import { transformUserData } from './transformUserData.js';
-import type { Auth0UserProfile } from '../Auth0RemixTypes.js';
+import type { Auth0UserProfile, UserProfile } from '../Auth0RemixTypes.js';
 
 describe('transformUserData', () => {
   it('should work', () => {
-    const input = {
+    const input: Auth0UserProfile = {
       name: 'John Doe',
       email: 'jd@example.com',
-      // eslint-disable-next-line camelcase
-      first_name: 'John',
-      // eslint-disable-next-line camelcase
-      last_name: 'Doe',
-      // eslint-disable-next-line camelcase
+      given_name: 'John',
+      family_name: 'Doe',
+      sub: 'Something',
+      picture: 'some-url',
+      nickname: 'J',
+      updatedAt: '2023-02-27T23:10:18.458Z',
       an_object: {
-        // eslint-disable-next-line camelcase
         with_a_nested_object: {
-          // eslint-disable-next-line camelcase
           and_a_nested_array: ['with', 'some', 'values']
         }
       }
-    } as Auth0UserProfile;
+    };
 
-    const expected = {
+    const expected: UserProfile = {
       name: 'John Doe',
       email: 'jd@example.com',
-      firstName: 'John',
-      lastName: 'Doe',
+      givenName: 'John',
+      familyName: 'Doe',
+      sub: 'Something',
+      picture: 'some-url',
+      nickname: 'J',
+      updatedAt: '2023-02-27T23:10:18.458Z',
       anObject: {
         withANestedObject: {
           andANestedArray: ['with', 'some', 'values']

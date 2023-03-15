@@ -1,11 +1,13 @@
 import type { SessionStorage } from '@remix-run/node';
-import type { errors as JoseErrors } from 'jose';
+// import type { JOSEError } from 'jose/dist/types/util/errors';
 
-export type TokenError = JoseErrors.JOSEError;
+export type TokenError = Error & { code: string; };
 
 export interface Auth0UserProfile {
   [key: string]: string | boolean | number | object;
 }
+
+export type Auth0CredentialsCallback = (tokens: UserCredentials) => void;
 
 export interface UserCredentials {
   accessToken: string;
@@ -14,8 +16,6 @@ export interface UserCredentials {
   expiresAt: number;
   lastRefreshed: number;
 }
-
-export type Auth0CredentialsCallback = (tokens: UserCredentials) => void;
 
 /**
  * @see https://auth0.com/docs/api/authentication#user-profile

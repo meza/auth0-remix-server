@@ -23,8 +23,8 @@
   "sideEffects": false,
   "scripts": {
     "build": "run-s build:cjs build:mjs",
-    "build:cjs": "tsc -p ./tsconfig.cjs.json && convert-extension cjs ./dist/cjs",
-    "build:mjs": "tsc -p tsconfig.json",
+    "build:cjs": "tsc -p ./tsconfig.cjs.build.json && convert-extension cjs ./dist/cjs",
+    "build:mjs": "tsc -p tsconfig.build.json",
     "ci": "run-s lint report",
     "clean": "rimraf ./dist .cache .npmignore",
     "lint": "run-p lint:*",

@@ -43,6 +43,7 @@ export default defineConfig({
         '**/*.stories.mdx',
         '**/*.stories.tsx',
         'test/**.*',
+        'src/Auth0RemixTypes.ts'
       ],
       all: true,
       reportsDirectory: './reports/coverage/unit',

@@ -279,3 +279,5 @@ export class Auth0RemixServer {
     return transformUserData(data);
   }
 }
+
+export * from './Auth0RemixTypes.js';

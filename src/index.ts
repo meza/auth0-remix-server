@@ -77,7 +77,6 @@ export class Auth0RemixServer {
       openIDConfigurationURL: `${this.domain}/.well-known/openid-configuration`
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     this.credentialsCallback = auth0RemixOptions.credentialsCallback || noop;
 
     this.jwks = jose.createRemoteJWKSet(new URL(this.auth0Urls.jwksURL));

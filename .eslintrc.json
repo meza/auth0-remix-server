@@ -1,6 +1,7 @@
 {
   "extends": [
     "tailored-tunes",
+    "plugin:@typescript-eslint/recommended",
     "plugin:json/recommended",
     "plugin:security/recommended"
   ],

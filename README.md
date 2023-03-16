@@ -24,7 +24,6 @@ to bridge that gap and also provide a convenient interface to use.
 - [ ] utilise the STATE parameter to prevent CSRF
 - [ ] failed events should remove the user from the session automatically
 - [ ] see if we can handle the callback while maintaining the session from before the login
-- [ ] create the callbacks for the id token and the refresh tokens
 - [ ] opt out of the session handling
 
 ## How to use
@@ -105,7 +104,7 @@ export const action: ActionFunction = () => {
   // or
   authenticator.authorize({ prompt: 'login' }) // force login
   // or
-  authenticator.authorize({ screen_hint: 'signup' }) // force signup
+  authenticator.authorize({ screenHint: 'signup' }) // force signup
 };
 ```
 

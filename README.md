@@ -101,8 +101,11 @@ import { authenticator } from '../../auth.server';
 import type { ActionFunction } from '@remix-run/node';
 
 export const action: ActionFunction = () => {
-  const forceLogin = false; // set to true to force auth0 to ask for a login
-  authenticator.authorize(forceLogin);
+  authenticator.authorize();
+  // or
+  authenticator.authorize({ prompt: 'login' }) // force login
+  // or
+  authenticator.authorize({ screen_hint: 'signup' }) // force signup
 };
 ```
 

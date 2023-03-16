@@ -53,54 +53,74 @@ describe('Auth0 Remix Server', () => {
   });
 
   describe('the authorization process', () => {
-    it<LocalTestContext>('redirects to the authorization endpoint', ({ authOptions }) => {
+    it<LocalTestContext>('redirects to the authorization endpoint', async ({ authOptions }) => {
       const authorizer = new Auth0RemixServer(authOptions);
+      const request = new Request('https://it-doesnt-matter.com', {
+        method: 'POST',
+        body: new FormData()
+      });
 
-      expect(() => authorizer.authorize()).toThrowError(redirectError); // a redirect happened
+      await expect(() => authorizer.authorize(request)).rejects.toThrowError(redirectError); // a redirect happened
 
       const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
       expect(redirectUrl).toMatchSnapshot();
     });
 
-    it<LocalTestContext>('forces the login if asked', ({ authOptions }) => {
+    it<LocalTestContext>('forces the login if asked', async ({ authOptions }) => {
       const authorizer = new Auth0RemixServer(authOptions);
+      const request = new Request('https://it-doesnt-matter.com', {
+        method: 'POST',
+        body: new FormData()
+      });
 
-      expect(() => authorizer.authorize({
+      await expect(() => authorizer.authorize(request, {
         forceLogin: true
-      })).toThrowError(redirectError); // a redirect happened
+      })).rejects.toThrowError(redirectError); // a redirect happened
 
       const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
       expect(redirectUrl).toMatchSnapshot();
     });
 
-    it<LocalTestContext>('works correctly when both are asked', ({ authOptions }) => {
+    it<LocalTestContext>('works correctly when both are asked', async ({ authOptions }) => {
       const authorizer = new Auth0RemixServer(authOptions);
+      const request = new Request('https://it-doesnt-matter.com', {
+        method: 'POST',
+        body: new FormData()
+      });
 
-      expect(() => authorizer.authorize({
+      await expect(() => authorizer.authorize(request, {
         forceLogin: true,
         forceSignup: true
-      })).toThrowError(redirectError); // a redirect happened
+      })).rejects.toThrowError(redirectError); // a redirect happened
 
       const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
       expect(redirectUrl).toMatchSnapshot();
     });
 
-    it<LocalTestContext>('forces the signup if asked', ({ authOptions }) => {
+    it<LocalTestContext>('forces the signup if asked', async ({ authOptions }) => {
       const authorizer = new Auth0RemixServer(authOptions);
+      const request = new Request('https://it-doesnt-matter.com', {
+        method: 'POST',
+        body: new FormData()
+      });
 
-      expect(() => authorizer.authorize({
+      await expect(() => authorizer.authorize(request, {
         forceSignup: true
-      })).toThrowError(redirectError); // a redirect happened
+      })).rejects.toThrowError(redirectError); // a redirect happened
 
       const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
       expect(redirectUrl).toMatchSnapshot();
     });
 
-    it<LocalTestContext>('adds the organisation if needed', ({ authOptions }) => {
+    it<LocalTestContext>('adds the organisation if needed', async ({ authOptions }) => {
       authOptions.clientDetails.organization = 'test-org';
       const authorizer = new Auth0RemixServer(authOptions);
+      const request = new Request('https://it-doesnt-matter.com', {
+        method: 'POST',
+        body: new FormData()
+      });
 
-      expect(() => authorizer.authorize()).toThrowError(redirectError); // a redirect happened
+      await expect(() => authorizer.authorize(request)).rejects.toThrowError(redirectError); // a redirect happened
 
       const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
       expect(redirectUrl).toMatchSnapshot();

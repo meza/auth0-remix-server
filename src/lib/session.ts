@@ -20,3 +20,15 @@ export const getCredentials = async (request: Request, sessionStore: SessionStor
   const credentials = session.get(sessionStore.key);
   return credentials;
 };
+
+export const saveStateToSession = async (request: Request, state: string, sessionStorage?: SessionStore) => {
+  const headers: HeadersInit = {};
+  if (sessionStorage) {
+    const cookie = request.headers.get('Cookie');
+    const session = await sessionStorage.store.getSession(cookie);
+    session.set(sessionStorage.key, state);
+    headers['Set-Cookie'] = await sessionStorage.store.commitSession(session);
+  }
+
+  return headers;
+};

@@ -1,7 +1,8 @@
 import { redirect } from '@remix-run/node';
 import * as jose from 'jose';
+import { v4 as uuid } from 'uuid';
 import { ensureDomain } from './lib/ensureDomainFormat.js';
-import { getCredentials, saveUserToSession } from './lib/session.js';
+import { getCredentials, saveStateToSession, saveUserToSession } from './lib/session.js';
 import { transformUserData } from './lib/transformUserData.js';
 import type {
   Auth0RemixOptions,
@@ -99,7 +100,8 @@ export class Auth0RemixServer {
     }
   }
 
-  public authorize(opts: AuthorizeOptions = {}) {
+  public async authorize(request: Request, opts: AuthorizeOptions = {}) {
+    const state = uuid();
     const scope = [
       'offline_access', // required for refresh token
       'openid', // required for id_token and the /userinfo api endpoint
@@ -112,6 +114,7 @@ export class Auth0RemixServer {
     authorizationURL.searchParams.set('redirect_uri', this.callbackURL);
     authorizationURL.searchParams.set('scope', scope.join(' '));
     authorizationURL.searchParams.set('audience', this.clientCredentials.audience);
+    authorizationURL.searchParams.set('state', state);
     if (this.clientCredentials.organization) {
       authorizationURL.searchParams.set('organization', this.clientCredentials.organization);
     }
@@ -122,12 +125,38 @@ export class Auth0RemixServer {
       authorizationURL.searchParams.set('screen_hint', 'signup');
     }
 
-    throw redirect(authorizationURL.toString());
+    const headers = await saveStateToSession(request, state, this.session); // save the state in the session temporary
+
+    throw redirect(authorizationURL.toString(), {
+      headers: headers
+    });
   }
 
   public async handleCallback(request: Request, options: HandleCallbackOptions): Promise<never | UserCredentials> {
     const formData = await request.formData();
     const code = formData.get('code') as string;
+    const state = formData.get('state') as string;
+
+    if (!state) {
+      console.error('No state found in callback');
+      throw redirect(this.failedLoginRedirect);
+    }
+
+    const cookie = request.headers.get('Cookie');
+    const session = await this.session.store.getSession(cookie);
+    const stateSession = session.get(this.session.key);
+
+    if (!stateSession) {
+      console.error('No state found in session');
+      throw redirect(this.failedLoginRedirect);
+    }
+
+    if (stateSession === state) {
+      session.unset(this.session.key);
+    } else {
+      console.error('State mismatch');
+      throw redirect(this.failedLoginRedirect);
+    }
 
     if (!code) {
       console.error('No code found in callback');

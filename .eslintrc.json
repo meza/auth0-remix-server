@@ -17,6 +17,7 @@
   ],
   "rules": {
     "@typescript-eslint/no-unused-vars": 2,
+    "complexity": ["error", 10],
     "no-console": "off",
     "no-else-return": "off",
     "no-unused-expressions": "off",

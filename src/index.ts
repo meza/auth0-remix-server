@@ -11,18 +11,10 @@ import type {
   SessionStore,
   UserCredentials,
   UserProfile,
-  TokenError
+  TokenError,
+  AuthorizeOptions
 } from './Auth0RemixTypes.js';
 import type { AppLoadContext } from '@remix-run/node';
-
-/**
- * left to consider:
- * - [ ] utilise the STATE parameter to prevent CSRF
- * - [ ] failed things should remove the user from the session
- * - [ ] see if we can handle the callback while maintaining the session from before the login
- * - [ ] opt out of the session handling
- * - [ ] enable register with passing ?screen_hint=signup to the authorize endpoint
- */
 
 export enum Token {
   ID = 'id',
@@ -107,7 +99,7 @@ export class Auth0RemixServer {
     }
   }
 
-  public authorize(forceLogin = false) {
+  public authorize(opts: AuthorizeOptions = {}) {
     const scope = [
       'offline_access', // required for refresh token
       'openid', // required for id_token and the /userinfo api endpoint
@@ -120,11 +112,14 @@ export class Auth0RemixServer {
     authorizationURL.searchParams.set('redirect_uri', this.callbackURL);
     authorizationURL.searchParams.set('scope', scope.join(' '));
     authorizationURL.searchParams.set('audience', this.clientCredentials.audience);
-    if (forceLogin) {
-      authorizationURL.searchParams.set('prompt', 'login');
-    }
     if (this.clientCredentials.organization) {
       authorizationURL.searchParams.set('organization', this.clientCredentials.organization);
+    }
+    if (opts.forceLogin) {
+      authorizationURL.searchParams.set('prompt', 'login');
+    }
+    if (opts.forceSignup) {
+      authorizationURL.searchParams.set('screen_hint', 'signup');
     }
 
     throw redirect(authorizationURL.toString());

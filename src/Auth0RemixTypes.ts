@@ -68,6 +68,11 @@ export interface Auth0RemixOptions {
   credentialsCallback?: Auth0CredentialsCallback;
 }
 
+export interface AuthorizeOptions {
+  forceLogin?: boolean;
+  forceSignup?: boolean;
+}
+
 export interface HandleCallbackOptions {
   onSuccessRedirect?: string;
 }

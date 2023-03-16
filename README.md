@@ -26,7 +26,6 @@ to bridge that gap and also provide a convenient interface to use.
 - [ ] see if we can handle the callback while maintaining the session from before the login
 - [ ] create the callbacks for the id token and the refresh tokens
 - [ ] opt out of the session handling
-- [ ] enable register with passing ?screen_hint=signup to the authorize endpoint
 
 ## How to use
 
@@ -102,8 +101,11 @@ import { authenticator } from '../../auth.server';
 import type { ActionFunction } from '@remix-run/node';
 
 export const action: ActionFunction = () => {
-  const forceLogin = false; // set to true to force auth0 to ask for a login
-  authenticator.authorize(forceLogin);
+  authenticator.authorize();
+  // or
+  authenticator.authorize({ prompt: 'login' }) // force login
+  // or
+  authenticator.authorize({ screen_hint: 'signup' }) // force signup
 };
 ```
 

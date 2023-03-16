@@ -101,12 +101,10 @@ import type { ActionFunction } from '@remix-run/node';
 
 export const action: ActionFunction = () => {
   authenticator.authorize();
-  // or
-  authenticator.authorize({ prompt: 'login' }) // force login
-  // or
-  authenticator.authorize({ screenHint: 'signup' }) // force signup
 };
 ```
+
+> *Note* You can modify the behaviour of the `authorize` method. More on that [here](#modifying-the-authorize-process)
 
 #### 4. Create a callback route in `src/routes/auth/callback.tsx`
 
@@ -221,6 +219,50 @@ try {
   const { code, message } = error as TokenError;
 }
 ```
+
+## Modifying the Authorize process
+
+### Forcing a login
+
+During the authrization process, if the user is already logged into Auth0, they will not be asked to log in again.
+You can change that behaviour by passing in the `forceLogin` option to the `authorize` method.
+
+```tsx
+// src/routes/auth/auth0.ts
+import { authenticator } from '../../auth.server';
+import type { ActionFunction } from '@remix-run/node';
+
+export const action: ActionFunction = () => {
+  authenticator.authorize({
+    forceLogin: true
+  });
+};
+```
+
+### Forcing a signup
+
+You can force the user to the sign-up page by passing in the `forceSignup` option to the `authorize` method.
+
+```tsx
+// src/routes/auth/auth0.ts
+import { authenticator } from '../../auth.server';
+import type { ActionFunction } from '@remix-run/node';
+
+export const action: ActionFunction = () => {
+  authenticator.authorize({
+    forceSignup: true
+  });
+};
+```
+
+Combining the `forceLogin` and `forceSignup` parameters to control the behavior of the authorization request produce the following results:
+
+| parameter                               | No existing session   | Existing session              |
+|-----------------------------------------|-----------------------|-------------------------------|
+| `{forceSignup: true}`                   | Shows the signup page | Redirects to the callback url |
+| `{forceLogin: true}`                    | Shows the login page  | Shows the login page          |
+| `{forceSignup: true, forceLogin: true}` | Shows the signup page | Shows the signup page         |
+
 
 ## Errors
 

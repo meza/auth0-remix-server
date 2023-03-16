@@ -66,7 +66,19 @@ describe('Auth0 Remix Server', () => {
       const authorizer = new Auth0RemixServer(authOptions);
 
       expect(() => authorizer.authorize({
-        prompt: 'login'
+        forceLogin: true
+      })).toThrowError(redirectError); // a redirect happened
+
+      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+      expect(redirectUrl).toMatchSnapshot();
+    });
+
+    it<LocalTestContext>('works correctly when both are asked', ({ authOptions }) => {
+      const authorizer = new Auth0RemixServer(authOptions);
+
+      expect(() => authorizer.authorize({
+        forceLogin: true,
+        forceSignup: true
       })).toThrowError(redirectError); // a redirect happened
 
       const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
@@ -77,7 +89,7 @@ describe('Auth0 Remix Server', () => {
       const authorizer = new Auth0RemixServer(authOptions);
 
       expect(() => authorizer.authorize({
-        screenHint: 'signup'
+        forceSignup: true
       })).toThrowError(redirectError); // a redirect happened
 
       const redirectUrl = vi.mocked(redirect).mock.calls[0][0];

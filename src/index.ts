@@ -16,14 +16,6 @@ import type {
 } from './Auth0RemixTypes.js';
 import type { AppLoadContext } from '@remix-run/node';
 
-/**
- * left to consider:
- * - [ ] utilise the STATE parameter to prevent CSRF
- * - [ ] failed things should remove the user from the session
- * - [ ] see if we can handle the callback while maintaining the session from before the login
- * - [ ] opt out of the session handling
- */
-
 export enum Token {
   ID = 'id',
   ACCESS = 'access'
@@ -107,42 +99,7 @@ export class Auth0RemixServer {
     }
   }
 
-  /**
-   * Initiates the Auth0 login/signup process by redirecting the user to the Auth0 authorization URL.
-   *
-   * @param {AuthorizeOptions} options - An object containing options for the authorization request.
-   * @param {string} [options.prompt] - Specifies whether to prompt the user to login or not. Valid values are 'login' and 'none'.
-   * @param {string} [options.screenHint] - Provides a hint to the server about the type of user interface to display.
-   *
-   * @throws {RedirectException} - Throws a `RedirectException` containing the authorization URL to redirect to.
-   *
-   * @description
-   * This function constructs the Auth0 authorization URL with the necessary parameters and redirects the user to that URL.
-   * The `prompt` parameter can be used to specify whether to prompt the user to login or not. If `prompt` is not specified,
-   * the default behavior is to prompt the user to login. The `screenHint` parameter can be used to provide a hint to the server
-   * about the type of user interface to display during the authentication flow (e.g. 'signup').
-   *
-   * If the `prompt` is set to `none` or is undefined, it will trigger a **silent authentication** flow:
-   *
-   * Silent authentication lets you perform an authentication flow where Auth0 will only reply with redirects, and never with a login page.
-   * When an Access Token has expired, silent authentication can be used to retrieve a new one without user interaction, assuming the user's
-   * Single Sign-on (SSO) session has not expired.
-   *
-   * ---
-   *
-   * Combining the `prompt` and `screenHint` parameters to control the behavior of the authorization request produce the following results:
-   *
-   * | parameter | No existing session | Existing session |
-   * |-----------|---------------------|------------------|
-   * | `screen_hint=signup` | Shows the signup page | Redirects to the callback url |
-   * | `prompt=login` | 	Shows the login page | Shows the login page |
-   * | `prompt=login&screen_hint=signup` | Shows the signup page | Shows the signup page |
-   *
-   * @see https://auth0.com/docs/api/authentication
-   * @see https://auth0.com/docs/api-auth/tutorials/silent-authentication
-   * @see https://auth0.com/docs/authenticate/login/auth0-universal-login/new-experience#signup
-   */
-  public authorize({ prompt, screenHint }: AuthorizeOptions = {}) {
+  public authorize(opts: AuthorizeOptions = {}) {
     const scope = [
       'offline_access', // required for refresh token
       'openid', // required for id_token and the /userinfo api endpoint
@@ -155,14 +112,14 @@ export class Auth0RemixServer {
     authorizationURL.searchParams.set('redirect_uri', this.callbackURL);
     authorizationURL.searchParams.set('scope', scope.join(' '));
     authorizationURL.searchParams.set('audience', this.clientCredentials.audience);
-    if (prompt) {
-      authorizationURL.searchParams.set('prompt', prompt);
-    }
-    if (screenHint) {
-      authorizationURL.searchParams.set('screen_hint', screenHint);
-    }
     if (this.clientCredentials.organization) {
       authorizationURL.searchParams.set('organization', this.clientCredentials.organization);
+    }
+    if (opts.forceLogin) {
+      authorizationURL.searchParams.set('prompt', 'login');
+    }
+    if (opts.forceSignup) {
+      authorizationURL.searchParams.set('screen_hint', 'signup');
     }
 
     throw redirect(authorizationURL.toString());

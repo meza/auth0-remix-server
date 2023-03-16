@@ -69,15 +69,8 @@ export interface Auth0RemixOptions {
 }
 
 export interface AuthorizeOptions {
-  /**
-   * Specifying to 'none' is the same as not specifying it.
-   */
-  prompt?: 'login' | 'none';
-  /**
-   * Is used to provide a hint to the server about the type of user interface that should be
-   * displayed during the authentication flow.
-   */
-  screenHint?: 'signup';
+  forceLogin?: boolean;
+  forceSignup?: boolean;
 }
 
 export interface HandleCallbackOptions {

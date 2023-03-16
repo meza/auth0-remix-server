@@ -26,7 +26,6 @@ to bridge that gap and also provide a convenient interface to use.
 - [ ] see if we can handle the callback while maintaining the session from before the login
 - [ ] create the callbacks for the id token and the refresh tokens
 - [ ] opt out of the session handling
-- [ ] enable register with passing ?screen_hint=signup to the authorize endpoint
 
 ## How to use
 

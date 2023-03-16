@@ -22,7 +22,6 @@ import type { AppLoadContext } from '@remix-run/node';
  * - [ ] failed things should remove the user from the session
  * - [ ] see if we can handle the callback while maintaining the session from before the login
  * - [ ] opt out of the session handling
- * - [ ] enable register with passing ?screen_hint=signup to the authorize endpoint
  */
 
 export enum Token {

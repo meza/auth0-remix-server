@@ -14,11 +14,14 @@ export const saveUserToSession = async (request: Request, userCredentials: UserC
   return headers;
 };
 
-const ensureCredentials = (o: unknown): UserCredentials | null =>
-  typeof o === 'object' && typeof (o as AnyObject).accessToken === 'string' ? (o as UserCredentials) : null;
-
-export const getCredentials = async (request: Request, sessionStore: SessionStore): Promise<UserCredentials | null> => {
+export const getCredentials = async (request: Request, sessionStore: SessionStore): Promise<UserCredentials> => {
   const cookie = request.headers.get('Cookie');
   const session = await sessionStore.store.getSession(cookie);
-  return ensureCredentials(session.get(sessionStore.key));
+  const maybeCredentials = session.get(sessionStore.key);
+
+  if (typeof maybeCredentials !== 'object' || typeof (maybeCredentials as AnyObject).accessToken !== 'string') {
+    throw new Error('Credentials not found');
+  }
+
+  return maybeCredentials as UserCredentials;
 };

@@ -362,7 +362,7 @@ describe('Auth0 Remix Server', () => {
   describe('getting the user', () => {
     describe('when there are no credentials returned', () => {
       it<LocalTestContext>('redirects to the failed login url', async ({ authOptions }) => {
-        vi.mocked(getCredentials).mockResolvedValueOnce(undefined as never);
+        vi.mocked(getCredentials).mockRejectedValue(new Error('Credentials not found'));
 
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 

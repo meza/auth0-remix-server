@@ -190,9 +190,11 @@ export class Auth0RemixServer {
   }
 
   public async getUser(request: Request, context: AppLoadContext): Promise<UserProfile> {
-    const credentials = await getCredentials(request, this.session);
+    let credentials: UserCredentials;
 
-    if (!credentials) {
+    try {
+      credentials = await getCredentials(request, this.session);
+    } catch (err) {
       console.error('No credentials found');
       throw redirect(this.failedLoginRedirect);
     }

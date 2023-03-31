@@ -106,10 +106,13 @@ export class Auth0RemixServer {
       'profile',
       'email'];
     const authorizationURL = new URL(this.auth0Urls.authorizationURL);
+
+    const callbackURL = opts.callbackParams ? this.addExtraCallbackParams(opts.callbackParams) : this.callbackURL;
+
     authorizationURL.searchParams.set('response_type', 'code');
     authorizationURL.searchParams.set('response_mode', 'form_post');
     authorizationURL.searchParams.set('client_id', this.clientCredentials.clientID);
-    authorizationURL.searchParams.set('redirect_uri', this.callbackURL);
+    authorizationURL.searchParams.set('redirect_uri', callbackURL);
     authorizationURL.searchParams.set('scope', scope.join(' '));
     authorizationURL.searchParams.set('audience', this.clientCredentials.audience);
     if (this.clientCredentials.organization) {
@@ -272,5 +275,20 @@ export class Auth0RemixServer {
 
     const data = await response.json();
     return transformUserData(data);
+  }
+
+  private addExtraCallbackParams(extraParams: Record<string, string>) {
+    let callbackURL = this.callbackURL;
+
+    if (extraParams) {
+      const withExtraParams = new URL(callbackURL);
+      console.log(`Adding callback params ${JSON.stringify(extraParams)}`);
+      for (const [key, value] of Object.entries(extraParams)) {
+        withExtraParams.searchParams.set(key, value);
+      }
+      callbackURL = withExtraParams.toString();
+    }
+
+    return callbackURL;
   }
 }

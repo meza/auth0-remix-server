@@ -65,9 +65,27 @@ describe('Auth0 Remix Server', () => {
     it<LocalTestContext>('forces the login if asked', ({ authOptions }) => {
       const authorizer = new Auth0RemixServer(authOptions);
 
-      expect(() => authorizer.authorize({
-        forceLogin: true
-      })).toThrowError(redirectError); // a redirect happened
+      expect(() =>
+        authorizer.authorize({
+          forceLogin: true
+        })
+      ).toThrowError(redirectError); // a redirect happened
+
+      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+      expect(redirectUrl).toMatchSnapshot();
+    });
+
+    it<LocalTestContext>('adds extra callback parameters when given', ({ authOptions }) => {
+      const authorizer = new Auth0RemixServer(authOptions);
+
+      expect(() =>
+        authorizer.authorize({
+          callbackParams: {
+            code: 'asdfghkl',
+            state: '1234qwer'
+          }
+        })
+      ).toThrowError(redirectError); // a redirect happened
 
       const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
       expect(redirectUrl).toMatchSnapshot();

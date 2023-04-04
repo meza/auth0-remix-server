@@ -17,6 +17,11 @@ export const saveUserToSession = async (request: Request, userCredentials: UserC
 export const getCredentials = async (request: Request, sessionStore: SessionStore): Promise<UserCredentials> => {
   const cookie = request.headers.get('Cookie');
   const session = await sessionStore.store.getSession(cookie);
-  const credentials = session.get(sessionStore.key);
-  return credentials;
+  const maybeCredentials = session.get(sessionStore.key);
+
+  if (typeof maybeCredentials !== 'object' || typeof (maybeCredentials as AnyObject).accessToken !== 'string') {
+    throw new Error('Credentials not found');
+  }
+
+  return maybeCredentials as UserCredentials;
 };

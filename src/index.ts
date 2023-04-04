@@ -31,6 +31,8 @@ interface Auth0Urls {
   tokenURL: string;
 }
 
+const noop = () => { /* empty */ };
+
 export class Auth0RemixServer {
   private readonly domain: string;
   private readonly refreshTokenRotationEnabled: boolean;
@@ -76,7 +78,7 @@ export class Auth0RemixServer {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    this.credentialsCallback = auth0RemixOptions.credentialsCallback || (() => {});
+    this.credentialsCallback = auth0RemixOptions.credentialsCallback || noop;
 
     this.jwks = jose.createRemoteJWKSet(new URL(this.auth0Urls.jwksURL));
   }

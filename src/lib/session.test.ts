@@ -48,7 +48,7 @@ describe('The session helper', () => {
       });
       const userCredentials: UserCredentials = {} as never;
       const sessionStore = undefined;
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { /* empty */ });
 
       const actual = await saveUserToSession(request, userCredentials, sessionStore);
       expect(actual).toEqual({});

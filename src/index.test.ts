@@ -31,7 +31,7 @@ describe('Auth0 Remix Server', () => {
     vi.setSystemTime(0);
     vi.stubGlobal('fetch', vi.fn());
     vi.mocked(redirect).mockImplementation(() => {
-      throw new Error(redirectError as never);
+      throw new Error(redirectError);
     });
     vi.mocked(jose.createRemoteJWKSet).mockReturnValue('jwkSet' as never);
     context.appLoadContext = {};
@@ -188,7 +188,9 @@ describe('Auth0 Remix Server', () => {
           `);
         });
 
-        it<LocalTestContext>('includes the refresh token if the rotation is set', async ({ authOptions }) => {
+        it<LocalTestContext>('includes the refresh token if the rotation is set', async ({
+          authOptions
+        }) => {
           authOptions.refreshTokenRotationEnabled = true;
           const auth0Response = {
             access_token: 'test-access-token2',
@@ -376,6 +378,7 @@ describe('Auth0 Remix Server', () => {
         expect(consoleSpy).toHaveBeenCalledWith('No credentials found');
       });
     });
+
     describe('when the access token is valid', () => {
       beforeEach(() => {
         vi.mocked(getCredentials).mockResolvedValueOnce({
@@ -489,7 +492,10 @@ describe('Auth0 Remix Server', () => {
             vi.mocked(getCredentials).mockResolvedValue({} as never);
           });
 
-          it<LocalTestContext>('redirects to the failed login url', async ({ authOptions, appLoadContext }) => {
+          it<LocalTestContext>('redirects to the failed login url', async ({
+            authOptions,
+            appLoadContext
+          }) => {
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(noop);
             const request = new Request('https://it-doesnt-matter.com');
 
@@ -506,7 +512,10 @@ describe('Auth0 Remix Server', () => {
             } as never);
           });
 
-          it<LocalTestContext>('redirects to the failed login url when the refresh fails', async ({ authOptions, appLoadContext }) => {
+          it<LocalTestContext>('redirects to the failed login url when the refresh fails', async ({
+            authOptions,
+            appLoadContext
+          }) => {
             vi.mocked(fetch).mockResolvedValue({
               ok: false
             } as never);
@@ -588,7 +597,10 @@ describe('Auth0 Remix Server', () => {
 
           });
 
-          it<LocalTestContext>('returns the correct credentials with the rotation on', async ({ authOptions, appLoadContext }) => {
+          it<LocalTestContext>('returns the correct credentials with the rotation on', async ({
+            authOptions,
+            appLoadContext
+          }) => {
             vi.mocked(fetch).mockResolvedValue({
               ok: true,
               json: () => Promise.resolve({
@@ -626,7 +638,6 @@ describe('Auth0 Remix Server', () => {
               }
             `);
             expect(Object.keys(saveUserToSessionCall[1])).toContain('refreshToken');
-
           });
 
           it<LocalTestContext>('calls the credentials escape hatch callback', async ({ authOptions, appLoadContext }) => {

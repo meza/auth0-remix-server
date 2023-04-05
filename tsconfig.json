@@ -14,10 +14,10 @@
     "outDir": "./dist/esm",
     "declarationDir": "./dist/types",
     "noPropertyAccessFromIndexSignature": false,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "paths": {
+      "@test/*": ["./test/*"],
+    }
   },
-  "exclude": ["node_modules", "dist"],
-  "ts-node": {
-    "files": true
-  }
+  "exclude": ["node_modules", "dist"]
 }

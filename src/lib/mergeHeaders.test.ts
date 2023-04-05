@@ -1,5 +1,5 @@
+import { iterableToObject } from '@test/iterators.js';
 import { describe, it, expect } from 'vitest';
-import { iterableToObject } from './iterators.js';
 import { mergeHeaders } from './mergeHeaders.js';
 
 const SET_COOKIE_SESSION = '__session=test; Max-Age=31536000; Path=/; HttpOnly; Secure; SameSite=Lax';
@@ -32,7 +32,7 @@ describe('mergeHeaders', () => {
       'set-cookie': [
         SET_COOKIE_SESSION,
         SET_COOKIE_CSRF_TOKEN
-      ],
+      ].join(', '),
       'content-type': 'application/json'
     });
   });

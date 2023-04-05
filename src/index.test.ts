@@ -2,6 +2,7 @@
 import { redirect } from '@remix-run/node';
 import * as jose from 'jose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthorizeOptions } from './Auth0RemixTypes.js';
 import { getCredentials, saveUserToSession } from './lib/session.js';
 import { Auth0RemixServer, Token } from './index.js';
 import type { Auth0RemixOptions } from './Auth0RemixTypes.js';
@@ -64,49 +65,22 @@ describe('Auth0 Remix Server', () => {
       expect(redirectUrl).toMatchSnapshot();
     });
 
-    it<LocalTestContext>('forces the login if asked', ({ authOptions }) => {
-      const authorizer = new Auth0RemixServer(authOptions);
+    describe('with authorization options', () => {
+      describe.each<AuthorizeOptions>([
+        { forceLogin: true },
+        { forceSignup: true },
+        { forceLogin: true, forceSignup: true },
+        { csrfToken: 'some-token' }
+      ])('with options %j', (opts) => {
+        it<LocalTestContext>('should construct correct authorization URL', ({ authOptions }) => {
+          const authorizer = new Auth0RemixServer(authOptions);
 
-      expect(() => authorizer.authorize({
-        forceLogin: true
-      })).toThrowError(redirectError); // a redirect happened
+          expect(() => authorizer.authorize(opts)).toThrowError(redirectError); // a redirect happened
 
-      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
-      expect(redirectUrl).toMatchSnapshot();
-    });
-
-    it<LocalTestContext>('uses CSRF token', ({ authOptions }) => {
-      const authorizer = new Auth0RemixServer(authOptions);
-
-      expect(() => authorizer.authorize({
-        csrfToken: 'some-token'
-      })).toThrowError(redirectError); // a redirect happened
-
-      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
-      expect(redirectUrl).toMatchSnapshot();
-    });
-
-    it<LocalTestContext>('works correctly when both are asked', ({ authOptions }) => {
-      const authorizer = new Auth0RemixServer(authOptions);
-
-      expect(() => authorizer.authorize({
-        forceLogin: true,
-        forceSignup: true
-      })).toThrowError(redirectError); // a redirect happened
-
-      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
-      expect(redirectUrl).toMatchSnapshot();
-    });
-
-    it<LocalTestContext>('forces the signup if asked', ({ authOptions }) => {
-      const authorizer = new Auth0RemixServer(authOptions);
-
-      expect(() => authorizer.authorize({
-        forceSignup: true
-      })).toThrowError(redirectError); // a redirect happened
-
-      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
-      expect(redirectUrl).toMatchSnapshot();
+          const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+          expect(redirectUrl).toMatchSnapshot();
+        });
+      });
     });
 
     it<LocalTestContext>('adds the organisation if needed', ({ authOptions }) => {
@@ -351,6 +325,117 @@ describe('Auth0 Remix Server', () => {
               },
             }
           `);
+            });
+
+            it<LocalTestContext>('calls the token escape hatch', async ({ authOptions }) => {
+              const escapeHatch = vi.fn();
+
+              authOptions.session = {
+                store: 'sessionStore' as never,
+                key: 'sessionKey'
+              };
+              authOptions.credentialsCallback = escapeHatch;
+              const auth0Response = {
+                access_token: 'test-access-token4',
+                id_token: 'test-id-token4',
+                expires_in: 600,
+                refresh_token: 'test-refresh-token4'
+              };
+
+              vi.mocked(fetch).mockResolvedValue({
+                ok: true, // return a non-ok response
+                json: () => Promise.resolve(auth0Response)
+              } as never);
+
+              const formData = new FormData();
+              formData.append('code', 'test-code');
+              const request = new Request('https://it-doesnt-matter.com', {
+                method: 'POST',
+                body: formData
+              });
+
+              vi.mocked(saveUserToSession).mockResolvedValue({
+                'some-cookie': 'data'
+              });
+
+              const authorizer = new Auth0RemixServer(authOptions);
+              await expect(authorizer.handleCallback(request, {
+                onSuccessRedirect: 'https://success-login-redirect.com'
+              })).rejects.toThrowError(redirectError); // a redirect happened
+
+              expect(escapeHatch).toHaveBeenCalledWith({
+                accessToken: 'test-access-token4',
+                refreshToken: 'test-refresh-token4',
+                expiresIn: 600,
+                lastRefreshed: 0,
+                expiresAt: 600000
+              });
+            });
+          });
+
+          describe('and there is a success url + success headers', () => {
+            it<LocalTestContext>('redirects to the success url with merged headers', async ({ authOptions }) => {
+              authOptions.session = {
+                store: {} as never,
+                key: 'sessionKey'
+              };
+              const auth0Response = {
+                access_token: 'test-access-token3',
+                id_token: 'test-id-token3',
+                expires_in: 300,
+                refresh_token: 'test-refresh-token3'
+              };
+              vi.mocked(fetch).mockResolvedValue({
+                ok: true, // return a non-ok response
+                json: () => Promise.resolve(auth0Response)
+              } as never);
+
+              const formData = new FormData();
+              formData.append('code', 'test-code');
+              const request = new Request('https://it-doesnt-matter.com', {
+                method: 'POST',
+                body: formData
+              });
+
+              vi.mocked(saveUserToSession).mockResolvedValue({
+                'some-cookie': 'data'
+              });
+
+              const authorizer = new Auth0RemixServer(authOptions);
+              await expect(
+                authorizer.handleCallback(request, {
+                  onSuccessRedirect: ['https://success-login-redirect.com', {
+                    'x-my-custom-header': 'hello world',
+                    'some-cookie': 'stuff'
+                  }]
+                })
+              ).rejects.toThrowError(redirectError); // a redirect happened
+
+              const saveUserToSessionArgs = vi.mocked(saveUserToSession).mock.calls[0];
+              expect(saveUserToSessionArgs[0]).toBe(request);
+              expect(saveUserToSessionArgs[2]).toEqual(authOptions.session);
+              expect(saveUserToSessionArgs[1]).toMatchInlineSnapshot(`
+                 {
+                   "accessToken": "test-access-token3",
+                   "expiresAt": 300000,
+                   "expiresIn": 300,
+                   "lastRefreshed": 0,
+                 }
+              `);
+
+              const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+              expect(redirectUrl).toEqual('https://success-login-redirect.com');
+
+              const redirectInit = vi.mocked(redirect).mock.calls[0][1];
+
+              expect(redirectInit).toMatchInlineSnapshot(`
+                  {
+                    "headers": {
+                      "some-cookie": "stuff, data",
+                      "x-my-custom-header": "hello world",
+                    },
+                  }
+                `);
             });
 
             it<LocalTestContext>('calls the token escape hatch', async ({ authOptions }) => {

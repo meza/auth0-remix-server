@@ -287,8 +287,9 @@ export class Auth0RemixServer {
     return transformUserData(data);
   }
 
-  private getSuccessRedirect(authHeaders: HeadersInit, redirectOpts: HandleCallbackOptions['onSuccessRedirect']) {
-    let path, redirectHeaders;
+  private getSuccessRedirect(authHeaders: HeadersInit, redirectOpts: NonNullable<HandleCallbackOptions['onSuccessRedirect']>) {
+    let path: string, redirectHeaders: HeadersInit | undefined;
+
     if (typeof redirectOpts === 'string') {
       path = redirectOpts;
     } else {

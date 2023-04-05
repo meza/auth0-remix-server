@@ -2,6 +2,7 @@
   "extends": [
     "tailored-tunes",
     "plugin:@typescript-eslint/recommended",
+    "plugin:import/typescript",
     "plugin:json/recommended",
     "plugin:security/recommended"
   ],
@@ -14,9 +15,38 @@
   },
   "plugins": [
     "json",
-    "@typescript-eslint"
+    "@typescript-eslint",
+    "import"
   ],
   "rules": {
+    "import/order": [
+      2,
+      {
+        "alphabetize": {
+          "caseInsensitive": false,
+          "order": "asc"
+        },
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index",
+          "type"
+        ],
+        "pathGroups": [
+          {
+            "pattern": "react",
+            "group": "external",
+            "position": "before"
+          }
+        ],
+        "pathGroupsExcludedImportTypes": [
+          "type"
+        ]
+      }
+    ],
     "@typescript-eslint/no-unused-vars": 2,
     "no-console": "off",
     "no-else-return": "off",

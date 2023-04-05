@@ -1,4 +1,6 @@
 .idea
+.fleet
+.vscode
 dist
 node_modules
 reports

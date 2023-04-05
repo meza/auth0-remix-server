@@ -22,6 +22,7 @@
   "private": false,
   "sideEffects": false,
   "scripts": {
+    "dev": "run-s 'build:cjs -- --watch' 'build:mjs -- --watch'",
     "build": "run-s build:cjs build:mjs",
     "build:cjs": "tsc -p ./tsconfig.cjs.build.json && convert-extension cjs ./dist/cjs",
     "build:mjs": "tsc -p tsconfig.build.json",
@@ -120,6 +121,7 @@
   },
   "dependencies": {
     "camelize-ts": "2.3.0",
-    "jose": "4.13.1"
+    "jose": "4.13.1",
+    "zod": "3.21.4"
   }
 }

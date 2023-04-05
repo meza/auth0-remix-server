@@ -1,6 +1,6 @@
 import type { SessionStore, UserCredentials } from '../Auth0RemixTypes.js';
 
-export const saveUserToSession = async (request: Request, userCredentials: UserCredentials, sessionStorage?: SessionStore) => {
+export const saveUserToSession = async (request: Request, userCredentials: UserCredentials, sessionStorage?: SessionStore): Promise<HeadersInit> => {
   const headers: HeadersInit = {};
   if (sessionStorage) {
     const cookie = request.headers.get('Cookie');

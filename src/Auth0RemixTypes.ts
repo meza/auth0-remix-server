@@ -1,8 +1,9 @@
 import type { SessionStorage } from '@remix-run/node';
 import type { Camelize } from 'camelize-ts';
+import type { errors as JoseErrors } from 'jose';
 import type { JsonObject, JsonValue, SetOptional } from 'type-fest';
 
-export type TokenError = Error & { code: string; };
+export type TokenError = JoseErrors.JOSEError;
 
 export interface Auth0UserProfile extends JsonObject {
   sub: string;
@@ -82,8 +83,10 @@ export interface Auth0RemixOptions {
 export interface AuthorizeOptions {
   forceLogin?: boolean;
   forceSignup?: boolean;
+  csrfToken?: string;
 }
 
 export interface HandleCallbackOptions {
-  onSuccessRedirect?: string;
+  onSuccessRedirect?: string | [string, HeadersInit];
+  csrfToken?: string;
 }

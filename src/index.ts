@@ -1,6 +1,7 @@
 import { redirect } from '@remix-run/node';
 import * as jose from 'jose';
 import { ensureDomain } from './lib/ensureDomainFormat.js';
+import { mergeHeaders } from './lib/mergeHeaders.js';
 import { getCredentials, saveUserToSession } from './lib/session.js';
 import { transformUserData } from './lib/transformUserData.js';
 import type {
@@ -117,6 +118,7 @@ export class Auth0RemixServer {
     authorizationURL.searchParams.set('redirect_uri', this.callbackURL);
     authorizationURL.searchParams.set('scope', scope.join(' '));
     authorizationURL.searchParams.set('audience', this.clientCredentials.audience);
+
     if (this.clientCredentials.organization) {
       authorizationURL.searchParams.set('organization', this.clientCredentials.organization);
     }
@@ -126,6 +128,9 @@ export class Auth0RemixServer {
     if (opts.forceSignup) {
       authorizationURL.searchParams.set('screen_hint', 'signup');
     }
+    if (opts.csrfToken) {
+      authorizationURL.searchParams.set('state', opts.csrfToken);
+    }
 
     throw redirect(authorizationURL.toString());
   }
@@ -133,9 +138,15 @@ export class Auth0RemixServer {
   public async handleCallback(request: Request, options: HandleCallbackOptions): Promise<UserCredentials> {
     const formData = await request.formData();
     const code = formData.get('code');
+    const state = formData.get('state');
 
     if (!code) {
       console.error('No code found in callback');
+      throw redirect(this.failedLoginRedirect);
+    }
+
+    if ((options.csrfToken ?? null) !== state) {
+      console.error('CSRF token does not match');
       throw redirect(this.failedLoginRedirect);
     }
 
@@ -172,10 +183,8 @@ export class Auth0RemixServer {
     this.credentialsCallback({ ...userData, refreshToken: data.refresh_token });
 
     if (options.onSuccessRedirect) {
-      const headers = await saveUserToSession(request, userData, this.session);
-      throw redirect(options.onSuccessRedirect, {
-        headers: headers
-      });
+      const authHeaders = await saveUserToSession(request, userData, this.session);
+      throw this.getSuccessRedirect(authHeaders, options.onSuccessRedirect);
     }
 
     return userData;
@@ -202,7 +211,6 @@ export class Auth0RemixServer {
 
     try {
       await this.decodeToken(credentials.accessToken, Token.ACCESS);
-
       return await this.getUserProfile(credentials);
     } catch (error) {
       if ((error as TokenError).code === 'ERR_JWT_EXPIRED') {
@@ -277,5 +285,18 @@ export class Auth0RemixServer {
 
     const data = (await response.json()) as Auth0UserProfile;
     return transformUserData(data);
+  }
+
+  private getSuccessRedirect(authHeaders: HeadersInit, redirectOpts: HandleCallbackOptions['onSuccessRedirect']) {
+    let path, redirectHeaders;
+    if (typeof redirectOpts === 'string') {
+      path = redirectOpts;
+    } else {
+      ([path, redirectHeaders] = redirectOpts);
+    }
+
+    return redirect(path, {
+      headers: redirectHeaders ? mergeHeaders(redirectHeaders, authHeaders) : authHeaders
+    });
   }
 }

@@ -75,6 +75,17 @@ describe('Auth0 Remix Server', () => {
       expect(redirectUrl).toMatchSnapshot();
     });
 
+    it<LocalTestContext>('uses CSRF token', ({ authOptions }) => {
+      const authorizer = new Auth0RemixServer(authOptions);
+
+      expect(() => authorizer.authorize({
+        csrfToken: 'some-token'
+      })).toThrowError(redirectError); // a redirect happened
+
+      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+      expect(redirectUrl).toMatchSnapshot();
+    });
+
     it<LocalTestContext>('works correctly when both are asked', ({ authOptions }) => {
       const authorizer = new Auth0RemixServer(authOptions);
 
@@ -129,56 +140,112 @@ describe('Auth0 Remix Server', () => {
     });
 
     describe('when there is a code in the exchange', () => {
-      it<LocalTestContext>('redirects to the failed login url if the token exchange fails', async ({ authOptions }) => {
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-        vi.mocked(fetch).mockResolvedValue({
-          ok: false // return a non-ok response
-        } as never);
+      describe('when CSRF token is provided', () => {
+        describe('and no state param is received', () => {
+          it<LocalTestContext>('redirects to the failed login url', async ({
+            authOptions
+          }) => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+            const authorizer = new Auth0RemixServer(authOptions);
+            const formData = new FormData();
+            formData.append('code', 'test-code');
 
-        const authorizer = new Auth0RemixServer(authOptions);
-        const formData = new FormData();
-        formData.append('code', 'test-code');
+            const request = new Request('https://it-doesnt-matter.com', {
+              method: 'POST',
+              body: formData
+            });
 
-        const request = new Request('https://it-doesnt-matter.com', {
-          method: 'POST',
-          body: formData
+            await expect(authorizer.handleCallback(request, {
+              csrfToken: 'some-csrf-token'
+            })).rejects.toThrowError(redirectError); // a redirect happened
+
+            const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+            expect(redirectUrl).toEqual(authOptions.failedLoginRedirect);
+            expect(consoleSpy).toHaveBeenCalledWith('CSRF token does not match');
+          });
         });
 
-        await expect(authorizer.handleCallback(request, {})).rejects.toThrowError(redirectError); // a redirect happened
+        describe('and invalid state param is received', () => {
+          it<LocalTestContext>('redirects to the failed login url', async ({
+            authOptions
+          }) => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+            const authorizer = new Auth0RemixServer(authOptions);
+            const formData = new FormData();
+            formData.append('code', 'test-code');
+            formData.append('state', 'invalid-csrf-token');
 
-        const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
-        expect(redirectUrl).toEqual(authOptions.failedLoginRedirect);
+            const request = new Request('https://it-doesnt-matter.com', {
+              method: 'POST',
+              body: formData
+            });
 
-        const fetchArgs = vi.mocked(fetch).mock.calls[0];
-        expect(fetchArgs[0]).toMatchInlineSnapshot('"https://test.domain.com/oauth/token"');
-        expect(fetchArgs[1]).toMatchSnapshot();
-        expect(consoleSpy).toHaveBeenCalledWith('Failed to get token from Auth0');
-      });
+            await expect(authorizer.handleCallback(request, {
+              csrfToken: 'some-csrf-token'
+            })).rejects.toThrowError(redirectError); // a redirect happened
 
-      describe('and there is no success url', () => {
-        it<LocalTestContext>('returns the user profile', async ({ authOptions }) => {
-          const auth0Response = {
-            access_token: 'test-access-token',
-            id_token: 'test-id-token',
-            expires_in: 30,
-            refresh_token: 'test-refresh-token'
-          };
-          vi.mocked(fetch).mockResolvedValue({
-            ok: true, // return a non-ok response
-            json: () => Promise.resolve(auth0Response)
-          } as never);
+            const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+            expect(redirectUrl).toEqual(authOptions.failedLoginRedirect);
+            expect(consoleSpy).toHaveBeenCalledWith('CSRF token does not match');
+          });
+        });
 
-          const formData = new FormData();
-          formData.append('code', 'test-code');
-          const request = new Request('https://it-doesnt-matter.com', {
-            method: 'POST',
-            body: formData
+        describe('and valid state param is received', () => {
+          it<LocalTestContext>('redirects to the failed login url if the token exchange fails', async ({
+            authOptions
+          }) => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+            vi.mocked(fetch).mockResolvedValue({
+              ok: false // return a non-ok response
+            } as never);
+
+            const authorizer = new Auth0RemixServer(authOptions);
+            const formData = new FormData();
+            formData.append('code', 'test-code');
+            formData.append('state', 'valid-csrf-token');
+
+            const request = new Request('https://it-doesnt-matter.com', {
+              method: 'POST',
+              body: formData
+            });
+
+            await expect(authorizer.handleCallback(request, {
+              csrfToken: 'valid-csrf-token'
+            })).rejects.toThrowError(redirectError); // a redirect happened
+
+            const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+            expect(redirectUrl).toEqual(authOptions.failedLoginRedirect);
+
+            const fetchArgs = vi.mocked(fetch).mock.calls[0];
+            expect(fetchArgs[0]).toMatchInlineSnapshot('"https://test.domain.com/oauth/token"');
+            expect(fetchArgs[1]).toMatchSnapshot();
+            expect(consoleSpy).toHaveBeenCalledWith('Failed to get token from Auth0');
           });
 
-          const authorizer = new Auth0RemixServer(authOptions);
-          const actual = await authorizer.handleCallback(request, {});
+          describe('and there is no success url', () => {
+            it<LocalTestContext>('returns the user profile', async ({ authOptions }) => {
+              const auth0Response = {
+                access_token: 'test-access-token',
+                id_token: 'test-id-token',
+                expires_in: 30,
+                refresh_token: 'test-refresh-token'
+              };
+              vi.mocked(fetch).mockResolvedValue({
+                ok: true, // return a non-ok response
+                json: () => Promise.resolve(auth0Response)
+              } as never);
 
-          expect(actual).toMatchInlineSnapshot(`
+              const formData = new FormData();
+              formData.append('code', 'test-code');
+              const request = new Request('https://it-doesnt-matter.com', {
+                method: 'POST',
+                body: formData
+              });
+
+              const authorizer = new Auth0RemixServer(authOptions);
+              const actual = await authorizer.handleCallback(request, {});
+
+              expect(actual).toMatchInlineSnapshot(`
             {
               "accessToken": "test-access-token",
               "expiresAt": 30000,
@@ -186,35 +253,35 @@ describe('Auth0 Remix Server', () => {
               "lastRefreshed": 0,
             }
           `);
-        });
+            });
 
-        it<LocalTestContext>('includes the refresh token if the rotation is set', async ({
-          authOptions
-        }) => {
-          authOptions.refreshTokenRotationEnabled = true;
-          const auth0Response = {
-            access_token: 'test-access-token2',
-            id_token: 'test-id-token2',
-            expires_in: 600,
-            refresh_token: 'test-refresh-token2'
-          };
+            it<LocalTestContext>('includes the refresh token if the rotation is set', async ({
+              authOptions
+            }) => {
+              authOptions.refreshTokenRotationEnabled = true;
+              const auth0Response = {
+                access_token: 'test-access-token2',
+                id_token: 'test-id-token2',
+                expires_in: 600,
+                refresh_token: 'test-refresh-token2'
+              };
 
-          vi.mocked(fetch).mockResolvedValue({
-            ok: true, // return a non-ok response
-            json: () => Promise.resolve(auth0Response)
-          } as never);
+              vi.mocked(fetch).mockResolvedValue({
+                ok: true, // return a non-ok response
+                json: () => Promise.resolve(auth0Response)
+              } as never);
 
-          const formData = new FormData();
-          formData.append('code', 'test-code');
-          const request = new Request('https://it-doesnt-matter.com', {
-            method: 'POST',
-            body: formData
-          });
+              const formData = new FormData();
+              formData.append('code', 'test-code');
+              const request = new Request('https://it-doesnt-matter.com', {
+                method: 'POST',
+                body: formData
+              });
 
-          const authorizer = new Auth0RemixServer(authOptions);
-          const actual = await authorizer.handleCallback(request, {});
+              const authorizer = new Auth0RemixServer(authOptions);
+              const actual = await authorizer.handleCallback(request, {});
 
-          expect(actual).toMatchInlineSnapshot(`
+              expect(actual).toMatchInlineSnapshot(`
             {
               "accessToken": "test-access-token2",
               "expiresAt": 600000,
@@ -223,46 +290,48 @@ describe('Auth0 Remix Server', () => {
               "refreshToken": "test-refresh-token2",
             }
           `);
-        });
-      });
-
-      describe('and there is a success url', () => {
-        it<LocalTestContext>('redirects to the success url', async ({ authOptions }) => {
-          authOptions.session = {
-            store: 'sessionStore',
-            key: 'sessionKey'
-          } as never;
-          const auth0Response = {
-            access_token: 'test-access-token3',
-            id_token: 'test-id-token3',
-            expires_in: 300,
-            refresh_token: 'test-refresh-token3'
-          };
-          vi.mocked(fetch).mockResolvedValue({
-            ok: true, // return a non-ok response
-            json: () => Promise.resolve(auth0Response)
-          } as never);
-
-          const formData = new FormData();
-          formData.append('code', 'test-code');
-          const request = new Request('https://it-doesnt-matter.com', {
-            method: 'POST',
-            body: formData
+            });
           });
 
-          vi.mocked(saveUserToSession).mockResolvedValue({
-            'some-cookie': 'data'
-          });
+          describe('and there is a success url', () => {
+            it<LocalTestContext>('redirects to the success url', async ({ authOptions }) => {
+              authOptions.session = {
+                store: {} as never,
+                key: 'sessionKey'
+              };
+              const auth0Response = {
+                access_token: 'test-access-token3',
+                id_token: 'test-id-token3',
+                expires_in: 300,
+                refresh_token: 'test-refresh-token3'
+              };
+              vi.mocked(fetch).mockResolvedValue({
+                ok: true, // return a non-ok response
+                json: () => Promise.resolve(auth0Response)
+              } as never);
 
-          const authorizer = new Auth0RemixServer(authOptions);
-          await expect(authorizer.handleCallback(request, {
-            onSuccessRedirect: 'https://success-login-redirect.com'
-          })).rejects.toThrowError(redirectError); // a redirect happened
+              const formData = new FormData();
+              formData.append('code', 'test-code');
+              const request = new Request('https://it-doesnt-matter.com', {
+                method: 'POST',
+                body: formData
+              });
 
-          const saveUserToSessionArgs = vi.mocked(saveUserToSession).mock.calls[0];
-          expect(saveUserToSessionArgs[0]).toBe(request);
-          expect(saveUserToSessionArgs[2]).toEqual(authOptions.session);
-          expect(saveUserToSessionArgs[1]).toMatchInlineSnapshot(`
+              vi.mocked(saveUserToSession).mockResolvedValue({
+                'some-cookie': 'data'
+              });
+
+              const authorizer = new Auth0RemixServer(authOptions);
+              await expect(
+                authorizer.handleCallback(request, {
+                  onSuccessRedirect: 'https://success-login-redirect.com'
+                })
+              ).rejects.toThrowError(redirectError); // a redirect happened
+
+              const saveUserToSessionArgs = vi.mocked(saveUserToSession).mock.calls[0];
+              expect(saveUserToSessionArgs[0]).toBe(request);
+              expect(saveUserToSessionArgs[2]).toEqual(authOptions.session);
+              expect(saveUserToSessionArgs[1]).toMatchInlineSnapshot(`
             {
               "accessToken": "test-access-token3",
               "expiresAt": 300000,
@@ -271,62 +340,287 @@ describe('Auth0 Remix Server', () => {
             }
           `);
 
-          const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
-          expect(redirectUrl).toEqual('https://success-login-redirect.com');
+              const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+              expect(redirectUrl).toEqual('https://success-login-redirect.com');
 
-          const redirectInit = vi.mocked(redirect).mock.calls[0][1];
-          expect(redirectInit).toMatchInlineSnapshot(`
+              const redirectInit = vi.mocked(redirect).mock.calls[0][1];
+              expect(redirectInit).toMatchInlineSnapshot(`
             {
               "headers": {
                 "some-cookie": "data",
               },
             }
           `);
+            });
 
+            it<LocalTestContext>('calls the token escape hatch', async ({ authOptions }) => {
+              const escapeHatch = vi.fn();
+
+              authOptions.session = {
+                store: 'sessionStore' as never,
+                key: 'sessionKey'
+              };
+              authOptions.credentialsCallback = escapeHatch;
+              const auth0Response = {
+                access_token: 'test-access-token4',
+                id_token: 'test-id-token4',
+                expires_in: 600,
+                refresh_token: 'test-refresh-token4'
+              };
+
+              vi.mocked(fetch).mockResolvedValue({
+                ok: true, // return a non-ok response
+                json: () => Promise.resolve(auth0Response)
+              } as never);
+
+              const formData = new FormData();
+              formData.append('code', 'test-code');
+              const request = new Request('https://it-doesnt-matter.com', {
+                method: 'POST',
+                body: formData
+              });
+
+              vi.mocked(saveUserToSession).mockResolvedValue({
+                'some-cookie': 'data'
+              });
+
+              const authorizer = new Auth0RemixServer(authOptions);
+              await expect(authorizer.handleCallback(request, {
+                onSuccessRedirect: 'https://success-login-redirect.com'
+              })).rejects.toThrowError(redirectError); // a redirect happened
+
+              expect(escapeHatch).toHaveBeenCalledWith({
+                accessToken: 'test-access-token4',
+                refreshToken: 'test-refresh-token4',
+                expiresIn: 600,
+                lastRefreshed: 0,
+                expiresAt: 600000
+              });
+            });
+          });
         });
+      });
 
-        it<LocalTestContext>('calls the token escape hatch', async ({ authOptions }) => {
-          const escapeHatch = vi.fn();
-
-          authOptions.session = {
-            store: 'sessionStore',
-            key: 'sessionKey'
-          } as never;
-          authOptions.credentialsCallback = escapeHatch;
-          const auth0Response = {
-            access_token: 'test-access-token4',
-            id_token: 'test-id-token4',
-            expires_in: 600,
-            refresh_token: 'test-refresh-token4'
-          };
-
+      describe('when CSRF token is not provided', () => {
+        it<LocalTestContext>('redirects to the failed login url if the token exchange fails', async ({ authOptions }) => {
+          const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
           vi.mocked(fetch).mockResolvedValue({
-            ok: true, // return a non-ok response
-            json: () => Promise.resolve(auth0Response)
+            ok: false // return a non-ok response
           } as never);
 
+          const authorizer = new Auth0RemixServer(authOptions);
           const formData = new FormData();
           formData.append('code', 'test-code');
+
           const request = new Request('https://it-doesnt-matter.com', {
             method: 'POST',
             body: formData
           });
 
-          vi.mocked(saveUserToSession).mockResolvedValue({
-            'some-cookie': 'data'
+          await expect(authorizer.handleCallback(request, {})).rejects.toThrowError(redirectError); // a redirect happened
+
+          const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+          expect(redirectUrl).toEqual(authOptions.failedLoginRedirect);
+
+          const fetchArgs = vi.mocked(fetch).mock.calls[0];
+          expect(fetchArgs[0]).toMatchInlineSnapshot('"https://test.domain.com/oauth/token"');
+          expect(fetchArgs[1]).toMatchSnapshot();
+          expect(consoleSpy).toHaveBeenCalledWith('Failed to get token from Auth0');
+        });
+
+        describe('and state param is present', () => {
+          it<LocalTestContext>('redirects to the failed login url', async ({ authOptions }) => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+            const authorizer = new Auth0RemixServer(authOptions);
+            const formData = new FormData();
+            formData.append('code', 'test-code');
+            formData.append('state', 'valid-csrf-token');
+            const request = new Request('https://it-doesnt-matter.com', {
+              method: 'POST',
+              body: formData
+            });
+
+            await expect(authorizer.handleCallback(request, {})).rejects.toThrowError(redirectError); // a redirect happened
+
+            const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+            expect(redirectUrl).toEqual(authOptions.failedLoginRedirect);
+
+            expect(consoleSpy).toHaveBeenCalledWith('CSRF token does not match');
+          });
+        });
+
+        describe('and there is no success url', () => {
+          it<LocalTestContext>('returns the user profile', async ({ authOptions }) => {
+            const auth0Response = {
+              access_token: 'test-access-token',
+              id_token: 'test-id-token',
+              expires_in: 30,
+              refresh_token: 'test-refresh-token'
+            };
+            vi.mocked(fetch).mockResolvedValue({
+              ok: true, // return a non-ok response
+              json: () => Promise.resolve(auth0Response)
+            } as never);
+
+            const formData = new FormData();
+            formData.append('code', 'test-code');
+            const request = new Request('https://it-doesnt-matter.com', {
+              method: 'POST',
+              body: formData
+            });
+
+            const authorizer = new Auth0RemixServer(authOptions);
+            const actual = await authorizer.handleCallback(request, {});
+
+            expect(actual).toMatchInlineSnapshot(`
+            {
+              "accessToken": "test-access-token",
+              "expiresAt": 30000,
+              "expiresIn": 30,
+              "lastRefreshed": 0,
+            }
+          `);
           });
 
-          const authorizer = new Auth0RemixServer(authOptions);
-          await expect(authorizer.handleCallback(request, {
-            onSuccessRedirect: 'https://success-login-redirect.com'
-          })).rejects.toThrowError(redirectError); // a redirect happened
+          it<LocalTestContext>('includes the refresh token if the rotation is set', async ({
+            authOptions
+          }) => {
+            authOptions.refreshTokenRotationEnabled = true;
+            const auth0Response = {
+              access_token: 'test-access-token2',
+              id_token: 'test-id-token2',
+              expires_in: 600,
+              refresh_token: 'test-refresh-token2'
+            };
 
-          expect(escapeHatch).toHaveBeenCalledWith({
-            accessToken: 'test-access-token4',
-            refreshToken: 'test-refresh-token4',
-            expiresIn: 600,
-            lastRefreshed: 0,
-            expiresAt: 600000
+            vi.mocked(fetch).mockResolvedValue({
+              ok: true, // return a non-ok response
+              json: () => Promise.resolve(auth0Response)
+            } as never);
+
+            const formData = new FormData();
+            formData.append('code', 'test-code');
+            const request = new Request('https://it-doesnt-matter.com', {
+              method: 'POST',
+              body: formData
+            });
+
+            const authorizer = new Auth0RemixServer(authOptions);
+            const actual = await authorizer.handleCallback(request, {});
+
+            expect(actual).toMatchInlineSnapshot(`
+            {
+              "accessToken": "test-access-token2",
+              "expiresAt": 600000,
+              "expiresIn": 600,
+              "lastRefreshed": 0,
+              "refreshToken": "test-refresh-token2",
+            }
+          `);
+          });
+        });
+
+        describe('and there is a success url', () => {
+          it<LocalTestContext>('redirects to the success url', async ({ authOptions }) => {
+            authOptions.session = {
+              store: 'sessionStore',
+              key: 'sessionKey'
+            } as never;
+            const auth0Response = {
+              access_token: 'test-access-token3',
+              id_token: 'test-id-token3',
+              expires_in: 300,
+              refresh_token: 'test-refresh-token3'
+            };
+            vi.mocked(fetch).mockResolvedValue({
+              ok: true, // return a non-ok response
+              json: () => Promise.resolve(auth0Response)
+            } as never);
+
+            const formData = new FormData();
+            formData.append('code', 'test-code');
+            const request = new Request('https://it-doesnt-matter.com', {
+              method: 'POST',
+              body: formData
+            });
+
+            vi.mocked(saveUserToSession).mockResolvedValue({
+              'some-cookie': 'data'
+            });
+
+            const authorizer = new Auth0RemixServer(authOptions);
+            await expect(authorizer.handleCallback(request, {
+              onSuccessRedirect: 'https://success-login-redirect.com'
+            })).rejects.toThrowError(redirectError); // a redirect happened
+
+            const saveUserToSessionArgs = vi.mocked(saveUserToSession).mock.calls[0];
+            expect(saveUserToSessionArgs[0]).toBe(request);
+            expect(saveUserToSessionArgs[2]).toEqual(authOptions.session);
+            expect(saveUserToSessionArgs[1]).toMatchInlineSnapshot(`
+            {
+              "accessToken": "test-access-token3",
+              "expiresAt": 300000,
+              "expiresIn": 300,
+              "lastRefreshed": 0,
+            }
+          `);
+
+            const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+            expect(redirectUrl).toEqual('https://success-login-redirect.com');
+
+            const redirectInit = vi.mocked(redirect).mock.calls[0][1];
+            expect(redirectInit).toMatchInlineSnapshot(`
+            {
+              "headers": {
+                "some-cookie": "data",
+              },
+            }
+          `);
+          });
+
+          it<LocalTestContext>('calls the token escape hatch', async ({ authOptions }) => {
+            const escapeHatch = vi.fn();
+
+            authOptions.session = {
+              store: 'sessionStore',
+              key: 'sessionKey'
+            } as never;
+            authOptions.credentialsCallback = escapeHatch;
+            const auth0Response = {
+              access_token: 'test-access-token4',
+              id_token: 'test-id-token4',
+              expires_in: 600,
+              refresh_token: 'test-refresh-token4'
+            };
+
+            vi.mocked(fetch).mockResolvedValue({
+              ok: true, // return a non-ok response
+              json: () => Promise.resolve(auth0Response)
+            } as never);
+
+            const formData = new FormData();
+            formData.append('code', 'test-code');
+            const request = new Request('https://it-doesnt-matter.com', {
+              method: 'POST',
+              body: formData
+            });
+
+            vi.mocked(saveUserToSession).mockResolvedValue({
+              'some-cookie': 'data'
+            });
+
+            const authorizer = new Auth0RemixServer(authOptions);
+            await expect(authorizer.handleCallback(request, {
+              onSuccessRedirect: 'https://success-login-redirect.com'
+            })).rejects.toThrowError(redirectError); // a redirect happened
+
+            expect(escapeHatch).toHaveBeenCalledWith({
+              accessToken: 'test-access-token4',
+              refreshToken: 'test-refresh-token4',
+              expiresIn: 600,
+              lastRefreshed: 0,
+              expiresAt: 600000
+            });
           });
         });
       });

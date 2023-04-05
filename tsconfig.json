@@ -2,7 +2,7 @@
   "extends": "@meza/tsconfig-base",
   "compilerOptions": {
     "tsBuildInfoFile": ".cache/.esm.tsbuildinfo",
-    "lib": ["DOM", "ESNext"],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "preserveSymlinks": false,
     "target": "ES2020",
     "module": "NodeNext",
@@ -16,7 +16,6 @@
     "noPropertyAccessFromIndexSignature": false,
     "isolatedModules": true
   },
-  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
   "ts-node": {
     "files": true

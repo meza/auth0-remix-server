@@ -21,7 +21,7 @@ to bridge that gap and also provide a convenient interface to use.
 
 ## What is still missing?
 
-- [ ] utilise the STATE parameter to prevent CSRF
+- [x] utilise the STATE parameter to prevent CSRF
 - [ ] failed events should remove the user from the session automatically
 - [ ] see if we can handle the callback while maintaining the session from before the login
 - [ ] opt out of the session handling

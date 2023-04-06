@@ -1,5 +1,6 @@
-import camelize from 'camelize-ts';
 import type { Auth0UserProfile, UserProfile } from '../Auth0RemixTypes.js';
 
-export const transformUserData = (data: Auth0UserProfile) =>
-  camelize(data) satisfies UserProfile;
+export const transformUserData = async (data: Auth0UserProfile) => {
+  const camelize = (await import('camelize-ts')).default;
+  return camelize(data) satisfies UserProfile;
+};

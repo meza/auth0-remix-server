@@ -39,6 +39,6 @@ describe('transformUserData', () => {
 
     const actual = transformUserData(input);
 
-    expect(actual).toEqual(expected);
+    expect(actual).resolves.toEqual(expected);
   });
 });

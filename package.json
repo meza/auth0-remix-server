@@ -22,7 +22,7 @@
   "private": false,
   "sideEffects": false,
   "scripts": {
-    "dev": "run-s 'build:cjs -- --watch' 'build:mjs -- --watch'",
+    "dev": "npm run build:mjs -- --watch",
     "build": "run-s build:cjs build:mjs",
     "build:cjs": "tsc -p ./tsconfig.cjs.build.json && convert-extension cjs ./dist/cjs",
     "build:mjs": "tsc -p tsconfig.build.json",
@@ -76,6 +76,7 @@
     "@semantic-release/npm": "10.0.2",
     "@semantic-release/release-notes-generator": "10.0.3",
     "@total-typescript/ts-reset": "0.4.2",
+    "@types/bcrypt": "^5.0.0",
     "@types/is-ci": "3.0.0",
     "@types/node": "18.15.11",
     "@typescript-eslint/eslint-plugin": "5.57.1",
@@ -120,6 +121,9 @@
     "@remix-run/node": "1.15.0"
   },
   "dependencies": {
+    "base62-token": "^1.1.1",
+    "base62-ts": "^1.3.2",
+    "bcrypt": "^5.1.0",
     "camelize-ts": "2.3.0",
     "jose": "4.13.1",
     "zod": "3.21.4"

@@ -1,5 +1,6 @@
 import { redirect } from '@remix-run/node';
 import * as jose from 'jose';
+import { generateCsrfCookie, getCsrfCookieStorage, verifyCsrfToken } from './lib/csrfToken.js';
 import { ensureDomain } from './lib/ensureDomainFormat.js';
 import { mergeHeaders } from './lib/mergeHeaders.js';
 import { getCredentials, saveUserToSession } from './lib/session.js';
@@ -42,6 +43,7 @@ export class Auth0RemixServer {
   private readonly jwks: ReturnType<typeof jose.createRemoteJWKSet>;
   private readonly clientCredentials: ClientCredentials;
   private readonly session: SessionStore;
+  private readonly tokenSession: SessionStore;
   private readonly auth0Urls: Auth0Urls;
   private readonly credentialsCallback: Auth0CredentialsCallback;
 
@@ -70,6 +72,16 @@ export class Auth0RemixServer {
       store: auth0RemixOptions.session.store,
       key: auth0RemixOptions.session.key || 'user'
     };
+
+    if ('csrfTokenSecret' in auth0RemixOptions) {
+      this.tokenSession = {
+        store: getCsrfCookieStorage(auth0RemixOptions.csrfTokenSecret),
+        key: 'csrfToken'
+      };
+    } else {
+      this.tokenSession = auth0RemixOptions.csrfSession;
+    }
+
     this.auth0Urls = {
       tokenURL: `${this.domain}/oauth/token`,
       userProfileUrl: `${this.domain}/userinfo`,
@@ -104,7 +116,7 @@ export class Auth0RemixServer {
     }
   }
 
-  public authorize(opts: AuthorizeOptions = {}) {
+  public async authorize(request: Request, opts: AuthorizeOptions = {}) {
     const scope = [
       'offline_access', // required for refresh token
       'openid', // required for id_token and the /userinfo api endpoint
@@ -128,11 +140,14 @@ export class Auth0RemixServer {
     if (opts.forceSignup) {
       authorizationURL.searchParams.set('screen_hint', 'signup');
     }
-    if (opts.csrfToken) {
-      authorizationURL.searchParams.set('state', opts.csrfToken);
-    }
 
-    throw redirect(authorizationURL.toString());
+    const { cookie, token } = await generateCsrfCookie(request, this.tokenSession);
+    authorizationURL.searchParams.set('state', token);
+    throw redirect(authorizationURL.toString(), {
+      headers: {
+        'set-cookie': cookie
+      }
+    });
   }
 
   public async handleCallback(request: Request, options: HandleCallbackOptions): Promise<UserCredentials> {
@@ -145,8 +160,13 @@ export class Auth0RemixServer {
       throw redirect(this.failedLoginRedirect);
     }
 
-    if ((options.csrfToken ?? null) !== state) {
-      console.error('CSRF token does not match');
+    if (!state) {
+      console.error('No state found in callback');
+      throw redirect(this.failedLoginRedirect);
+    }
+
+    if (!await verifyCsrfToken(request, this.tokenSession, state.toString())) {
+      console.error('Invalid CSRF token');
       throw redirect(this.failedLoginRedirect);
     }
 
@@ -156,6 +176,7 @@ export class Auth0RemixServer {
     body.set('client_secret', this.clientCredentials.clientSecret);
     body.set('code', code.toString());
     body.set('redirect_uri', this.callbackURL);
+    // body.set('state', state.toString());
 
     const response = await fetch(this.auth0Urls.tokenURL, {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
@@ -300,4 +321,18 @@ export class Auth0RemixServer {
       headers: redirectHeaders ? mergeHeaders(redirectHeaders, authHeaders) : authHeaders
     });
   }
+
+  // private async getFailureRedirect(request: Request, destroyCsrfTokenCookie = true) {
+  //   let headers;
+  //
+  //   if (destroyCsrfTokenCookie) {
+  //     const { store } = this.tokenSession;
+  //     const session = await store.getSession(request.headers.get('cookie'));
+  //     headers = { 'set-cookie': await store.destroySession(session) };
+  //   }
+  //
+  //   return redirect(this.failedLoginRedirect, headers ? { headers: headers } : undefined);
+  // }
 }
+
+export { generateCsrfToken } from './lib/csrfToken.js';

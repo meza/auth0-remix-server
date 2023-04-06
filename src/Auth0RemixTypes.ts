@@ -19,7 +19,7 @@ export interface Auth0Credentials extends JsonObject {
   expires_in: number;
 }
 
-export interface UserCredentials {
+export interface UserCredentials extends JsonObject {
   accessToken: string;
   refreshToken?: string;
   expiresIn: number;
@@ -71,7 +71,7 @@ export interface SessionStore {
   store: SessionStorage;
 }
 
-export interface Auth0RemixOptions {
+interface BaseAuth0RemixOptions {
   callbackURL: string;
   failedLoginRedirect: string;
   refreshTokenRotationEnabled?: boolean;
@@ -80,13 +80,13 @@ export interface Auth0RemixOptions {
   credentialsCallback?: Auth0CredentialsCallback;
 }
 
+export type Auth0RemixOptions = (BaseAuth0RemixOptions & { csrfTokenSecret: string } | BaseAuth0RemixOptions & { csrfSession: SessionStore });
+
 export interface AuthorizeOptions {
   forceLogin?: boolean;
   forceSignup?: boolean;
-  csrfToken?: string;
 }
 
 export interface HandleCallbackOptions {
   onSuccessRedirect?: string | [string, HeadersInit];
-  csrfToken?: string;
 }

@@ -1,6 +1,6 @@
 import { redirect } from '@remix-run/node';
 import * as jose from 'jose';
-import { generateCsrfCookie, getCsrfCookieStorage, verifyCsrfToken } from './lib/csrfToken.js';
+import { generateCsrfCookie, getCsrfCookieStorage, getCsrfToken, verifyCsrfToken } from './lib/csrfToken.js';
 import { ensureDomain } from './lib/ensureDomainFormat.js';
 import { mergeHeaders } from './lib/mergeHeaders.js';
 import { getCredentials, saveUserToSession } from './lib/session.js';
@@ -46,6 +46,7 @@ export class Auth0RemixServer {
   private readonly tokenSession: SessionStore;
   private readonly auth0Urls: Auth0Urls;
   private readonly credentialsCallback: Auth0CredentialsCallback;
+  private readonly shouldHandleCookie: boolean = false;
 
   constructor(auth0RemixOptions: Auth0RemixOptions) {
     this.domain = ensureDomain(auth0RemixOptions.clientDetails.domain);
@@ -78,6 +79,7 @@ export class Auth0RemixServer {
         store: getCsrfCookieStorage(auth0RemixOptions.csrfTokenSecret),
         key: 'csrfToken'
       };
+      this.shouldHandleCookie = true;
     } else {
       this.tokenSession = auth0RemixOptions.csrfSession;
     }
@@ -117,6 +119,8 @@ export class Auth0RemixServer {
   }
 
   public async authorize(request: Request, opts: AuthorizeOptions = {}) {
+    console.log('[Auth0-Server] authorize');
+
     const scope = [
       'offline_access', // required for refresh token
       'openid', // required for id_token and the /userinfo api endpoint
@@ -141,16 +145,27 @@ export class Auth0RemixServer {
       authorizationURL.searchParams.set('screen_hint', 'signup');
     }
 
+    if (!this.shouldHandleCookie) {
+      console.log('** not handling cookie');
+      const token = await getCsrfToken(request, this.tokenSession);
+      if (!token) {
+        console.error('Missing token');
+        throw redirect(this.failedLoginRedirect);
+      }
+      authorizationURL.searchParams.set('state', token);
+      throw redirect(authorizationURL.toString());
+    }
+
     const { cookie, token } = await generateCsrfCookie(request, this.tokenSession);
     authorizationURL.searchParams.set('state', token);
+    console.log({ cookie: cookie, token: token });
     throw redirect(authorizationURL.toString(), {
-      headers: {
-        'set-cookie': cookie
-      }
+      headers: { 'set-cookie': cookie }
     });
   }
 
-  public async handleCallback(request: Request, options: HandleCallbackOptions): Promise<UserCredentials> {
+  public async handleCallback(request: Request, options?: HandleCallbackOptions): Promise<UserCredentials> {
+    console.log('[Auth0-Server] handleCallback');
     const formData = await request.formData();
     const code = formData.get('code');
     const state = formData.get('state');
@@ -176,8 +191,8 @@ export class Auth0RemixServer {
     body.set('client_secret', this.clientCredentials.clientSecret);
     body.set('code', code.toString());
     body.set('redirect_uri', this.callbackURL);
-    // body.set('state', state.toString());
 
+    console.log('** fetching');
     const response = await fetch(this.auth0Urls.tokenURL, {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       method: 'POST',
@@ -203,9 +218,9 @@ export class Auth0RemixServer {
 
     this.credentialsCallback({ ...userData, refreshToken: data.refresh_token });
 
-    if (options.onSuccessRedirect) {
+    if (options?.onSuccessRedirect) {
       const authHeaders = await saveUserToSession(request, userData, this.session);
-      throw this.getSuccessRedirect(authHeaders, options.onSuccessRedirect);
+      throw await this.getSuccessRedirect(authHeaders, options.onSuccessRedirect);
     }
 
     return userData;
@@ -308,13 +323,17 @@ export class Auth0RemixServer {
     return transformUserData(data);
   }
 
-  private getSuccessRedirect(authHeaders: HeadersInit, redirectOpts: NonNullable<HandleCallbackOptions['onSuccessRedirect']>) {
+  private async getSuccessRedirect(authHeaders: HeadersInit, redirectOpts: NonNullable<HandleCallbackOptions['onSuccessRedirect']>) {
     let path: string, redirectHeaders: HeadersInit | undefined;
 
     if (typeof redirectOpts === 'string') {
       path = redirectOpts;
+    } else if (typeof redirectOpts[1] === 'function') {
+      path = redirectOpts[0];
+      redirectHeaders = await redirectOpts[1]();
     } else {
-      ([path, redirectHeaders] = redirectOpts);
+      path = redirectOpts[0];
+      redirectHeaders = redirectOpts[1];
     }
 
     return redirect(path, {
@@ -336,3 +355,4 @@ export class Auth0RemixServer {
 }
 
 export { generateCsrfToken } from './lib/csrfToken.js';
+export * from './Auth0RemixTypes.js';

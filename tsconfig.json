@@ -4,6 +4,7 @@
     "tsBuildInfoFile": ".cache/.esm.tsbuildinfo",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "preserveSymlinks": false,
+    "incremental": true,
     "target": "ES2020",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
@@ -16,7 +17,7 @@
     "noPropertyAccessFromIndexSignature": false,
     "isolatedModules": true,
     "paths": {
-      "@test/*": ["./test/*"],
+      "@test/*": ["./test/*"]
     }
   },
   "exclude": ["node_modules", "dist"]

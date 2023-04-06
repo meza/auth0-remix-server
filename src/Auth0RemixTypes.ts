@@ -1,4 +1,4 @@
-import type { SessionStorage } from '@remix-run/node';
+import type { Session, SessionStorage } from '@remix-run/node';
 import type { Camelize } from 'camelize-ts';
 import type { errors as JoseErrors } from 'jose';
 import type { JsonObject, JsonValue, SetOptional } from 'type-fest';
@@ -66,9 +66,14 @@ export interface ClientCredentials {
   organization?: string | undefined;
 }
 
+export interface CsrfSessionStorage extends SessionStorage {
+  verifyToken?<T extends Session>(tokenToCheck: string, session: T): boolean;
+  getToken?<T extends Session>(session: T): string | undefined;
+}
+
 export interface SessionStore {
   key: string;
-  store: SessionStorage;
+  store: SessionStorage | CsrfSessionStorage;
 }
 
 interface BaseAuth0RemixOptions {
@@ -80,7 +85,9 @@ interface BaseAuth0RemixOptions {
   credentialsCallback?: Auth0CredentialsCallback;
 }
 
-export type Auth0RemixOptions = (BaseAuth0RemixOptions & { csrfTokenSecret: string } | BaseAuth0RemixOptions & { csrfSession: SessionStore });
+export type Auth0RemixOptions =
+  | BaseAuth0RemixOptions & { csrfTokenSecret: string }
+  | BaseAuth0RemixOptions & { csrfSession: SessionStore };
 
 export interface AuthorizeOptions {
   forceLogin?: boolean;
@@ -88,5 +95,5 @@ export interface AuthorizeOptions {
 }
 
 export interface HandleCallbackOptions {
-  onSuccessRedirect?: string | [string, HeadersInit];
+  onSuccessRedirect?: string | [string, HeadersInit | (() => HeadersInit) | (() => Promise<HeadersInit>)];
 }

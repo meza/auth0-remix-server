@@ -9,16 +9,19 @@ const bytesToHex = (bytes: Uint8Array) =>
 
 export const generateCsrfToken = () => bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
 
-export const getCsrfCookieStorage = (tokenSecret: string) => createCookieSessionStorage({
-  cookie: {
-    name: '__csrf-token',
-    httpOnly: true,
-    path: '/',
-    sameSite: false,
-    secrets: [tokenSecret],
-    secure: true
-  }
-});
+export const getCsrfCookieStorage = (tokenSecret = process.env.SESSION_SECRET) => {
+  console.warn('No secret provided for CSRF cookie storage');
+  return createCookieSessionStorage({
+    cookie: {
+      name: '__csrf-token',
+      httpOnly: true,
+      path: '/',
+      sameSite: false,
+      secrets: [tokenSecret].filter(Boolean),
+      secure: true
+    }
+  });
+};
 
 const getToken = async (session: Session, tokenStore: SessionStore) => {
   const { store } = tokenStore;

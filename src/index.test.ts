@@ -53,7 +53,7 @@ describe('Auth0 Remix Server', () => {
     };
     context.authOptions = {
       ...baseOptions,
-      csrfTokenSecret: 'secret'
+      csrfCookieSecret: 'secret'
     };
     context.authOptionsCustomStorage = {
       ...baseOptions,

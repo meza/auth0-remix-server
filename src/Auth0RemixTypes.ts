@@ -86,7 +86,7 @@ interface BaseAuth0RemixOptions {
 }
 
 export type Auth0RemixOptions =
-  | BaseAuth0RemixOptions & { csrfTokenSecret: string }
+  | BaseAuth0RemixOptions & { csrfCookieSecret?: string }
   | BaseAuth0RemixOptions & { csrfSession: SessionStore };
 
 export interface AuthorizeOptions {

@@ -74,14 +74,14 @@ export class Auth0RemixServer {
       key: auth0RemixOptions.session.key || 'user'
     };
 
-    if ('csrfTokenSecret' in auth0RemixOptions) {
+    if ('csrfSession' in auth0RemixOptions) {
+      this.tokenSession = auth0RemixOptions.csrfSession;
+    } else {
       this.tokenSession = {
-        store: getCsrfCookieStorage(auth0RemixOptions.csrfTokenSecret),
-        key: 'csrfToken'
+        store: getCsrfCookieStorage(auth0RemixOptions.csrfCookieSecret),
+        key: 'csrf-token'
       };
       this.shouldHandleCookie = true;
-    } else {
-      this.tokenSession = auth0RemixOptions.csrfSession;
     }
 
     this.auth0Urls = {

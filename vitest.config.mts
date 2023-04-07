@@ -1,5 +1,5 @@
-import path from 'node:path';
 import isCi from 'is-ci';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vitest/config';
 import type { CoverageReporter } from 'vitest';
 
@@ -15,6 +15,7 @@ if (!isCi) {
 }
 
 export default defineConfig({
+  plugins: [tsconfigPaths()],
   test: {
     globals: true,
     isolate: true,
@@ -24,6 +25,7 @@ export default defineConfig({
     deps: {
       fallbackCJS: true
     },
+    setupFiles: ['vitest.setup.mts'],
     dir: 'src',
     testTimeout: 10000,
     watch: false,
@@ -32,7 +34,6 @@ export default defineConfig({
     outputFile: 'reports/junit.xml',
     reporters: testReporters,
     coverage: {
-      // excludeNodeModules: true,
       src: ['src'],
       include: ['**/*.ts', '**/*.tsx'],
       exclude: [
@@ -40,8 +41,6 @@ export default defineConfig({
         '**/*.d.ts',
         '**/*.test.ts',
         '**/*.test.tsx',
-        '**/*.stories.mdx',
-        '**/*.stories.tsx',
         'test/**.*',
         'src/Auth0RemixTypes.ts'
       ],
@@ -54,9 +53,4 @@ export default defineConfig({
       lines: 100
     }
   },
-  resolve: {
-    alias: {
-      '~': path.resolve(__dirname, './src')
-    }
-  }
 });

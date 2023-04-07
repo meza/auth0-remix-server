@@ -1,6 +1,16 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Auth0 Remix Server > handling the callback token exchange > when there is a code in the exchange > redirects to the failed login url if the token exchange fails 2`] = `
+exports[`Auth0 Remix Server > handling the callback token exchange > when cookie storage is controlled > when there is a code in the exchange > and valid state param is received > redirects to the failed login url if the token exchange fails 2`] = `
+{
+  "body": "grant_type=authorization_code&client_id=clientId&client_secret=clientSecret&code=test-code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback",
+  "headers": {
+    "content-type": "application/x-www-form-urlencoded",
+  },
+  "method": "POST",
+}
+`;
+
+exports[`Auth0 Remix Server > handling the callback token exchange > when cookie storage is passed in > when there is a code in the exchange > and valid state param is received > redirects to the failed login url if the token exchange fails 2`] = `
 {
   "body": "grant_type=authorization_code&client_id=clientId&client_secret=clientSecret&code=test-code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback",
   "headers": {
@@ -14,12 +24,12 @@ exports[`Auth0 Remix Server > logging out > calls the correct url 1`] = `"https:
 
 exports[`Auth0 Remix Server > logging out > includes the headers supplied 1`] = `"https://test.domain.com/v2/logout?client_id=clientId&returnTo=http%3A%2F%2Flocalhost%3A3000%2Flogout-with-headers"`;
 
-exports[`Auth0 Remix Server > the authorization process > adds the organisation if needed 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&organization=test-org"`;
+exports[`Auth0 Remix Server > the authorization process > adds the organisation if needed 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&organization=test-org&state=token"`;
 
-exports[`Auth0 Remix Server > the authorization process > forces the login if asked 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&prompt=login"`;
+exports[`Auth0 Remix Server > the authorization process > when the token storage is passed in through opts > when token is found in storage > redirects to the authorization endpoint 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&state=token"`;
 
-exports[`Auth0 Remix Server > the authorization process > forces the signup if asked 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&screen_hint=signup"`;
+exports[`Auth0 Remix Server > the authorization process > with authorization options > with options {"forceLogin":true,"forceSignup":true} > should construct correct authorization URL 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&prompt=login&screen_hint=signup&state=token"`;
 
-exports[`Auth0 Remix Server > the authorization process > redirects to the authorization endpoint 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F"`;
+exports[`Auth0 Remix Server > the authorization process > with authorization options > with options {"forceLogin":true} > should construct correct authorization URL 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&prompt=login&state=token"`;
 
-exports[`Auth0 Remix Server > the authorization process > works correctly when both are asked 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&prompt=login&screen_hint=signup"`;
+exports[`Auth0 Remix Server > the authorization process > with authorization options > with options {"forceSignup":true} > should construct correct authorization URL 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&screen_hint=signup&state=token"`;

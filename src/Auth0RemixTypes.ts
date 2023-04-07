@@ -1,8 +1,9 @@
-import type { SessionStorage } from '@remix-run/node';
+import type { Session, SessionStorage } from '@remix-run/node';
 import type { Camelize } from 'camelize-ts';
+import type { errors as JoseErrors } from 'jose';
 import type { JsonObject, JsonValue, SetOptional } from 'type-fest';
 
-export type TokenError = Error & { code: string; };
+export type TokenError = JoseErrors.JOSEError;
 
 export interface Auth0UserProfile extends JsonObject {
   sub: string;
@@ -18,7 +19,7 @@ export interface Auth0Credentials extends JsonObject {
   expires_in: number;
 }
 
-export interface UserCredentials {
+export interface UserCredentials extends JsonObject {
   accessToken: string;
   refreshToken?: string;
   expiresIn: number;
@@ -65,12 +66,17 @@ export interface ClientCredentials {
   organization?: string | undefined;
 }
 
-export interface SessionStore {
-  key: string;
-  store: SessionStorage;
+export interface CsrfSessionStorage extends SessionStorage {
+  verifyToken?<T extends Session>(tokenToCheck: string, session: T): boolean;
+  getToken?<T extends Session>(session: T): string | undefined;
 }
 
-export interface Auth0RemixOptions {
+export interface SessionStore {
+  key: string;
+  store: SessionStorage | CsrfSessionStorage;
+}
+
+interface BaseAuth0RemixOptions {
   callbackURL: string;
   failedLoginRedirect: string;
   refreshTokenRotationEnabled?: boolean;
@@ -79,11 +85,15 @@ export interface Auth0RemixOptions {
   credentialsCallback?: Auth0CredentialsCallback;
 }
 
+export type Auth0RemixOptions =
+  | BaseAuth0RemixOptions & { csrfCookieSecret?: string }
+  | BaseAuth0RemixOptions & { csrfSession: SessionStore };
+
 export interface AuthorizeOptions {
   forceLogin?: boolean;
   forceSignup?: boolean;
 }
 
 export interface HandleCallbackOptions {
-  onSuccessRedirect?: string;
+  onSuccessRedirect?: string | [string, HeadersInit | (() => HeadersInit) | (() => Promise<HeadersInit>)];
 }

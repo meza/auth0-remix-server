@@ -5,8 +5,8 @@ import './test/custom-serializer.js';
 
 afterEach(() => {
   // these run after every single test
-  // vi.unstubAllEnvs();
-  // vi.unstubAllGlobals();
-  // vi.resetAllMocks();
-  // vi.useRealTimers();
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+  vi.resetAllMocks();
+  vi.useRealTimers();
 });

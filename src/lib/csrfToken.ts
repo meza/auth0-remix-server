@@ -22,15 +22,10 @@ export const getCsrfCookieStorage = (tokenSecret: string) => createCookieSession
 
 const getToken = async (session: Session, tokenStore: SessionStore) => {
   const { store } = tokenStore;
-  let csrfToken: string | undefined;
-
   if ('getToken' in store && typeof store.getToken !== 'undefined') {
-    csrfToken = store.getToken(session);
-  } else {
-    csrfToken = session.get(tokenStore.key);
+    return store.getToken(session);
   }
-
-  return csrfToken;
+  return session.get(tokenStore.key);
 };
 
 export const getCsrfToken = async (request: Request, tokenStore: SessionStore)=> {
@@ -57,7 +52,6 @@ export const verifyCsrfToken = async (request: Request, tokenStore: SessionStore
 };
 
 export const generateCsrfCookie = async (request: Request, tokenStore: SessionStore) => {
-  console.log('[generateCsrfCookie]');
   const { store: { getSession, commitSession }, key } = tokenStore;
   const session = await getSession(request.headers.get('cookie'));
   if (!session.has(key)) {
@@ -68,4 +62,9 @@ export const generateCsrfCookie = async (request: Request, tokenStore: SessionSt
     cookie: await commitSession(session),
     token: csrfToken
   };
+};
+
+export const destroyCsrfCookie = async (request: Request, tokenStore: SessionStore)=> {
+  const { store: { getSession, destroySession } } = tokenStore;
+  return destroySession(await getSession(request.headers.get('cookie')));
 };

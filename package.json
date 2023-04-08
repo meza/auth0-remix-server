@@ -116,7 +116,21 @@
     "node": ">=16"
   },
   "peerDependencies": {
-    "@remix-run/node": "1.15.0"
+    "@remix-run/server-runtime": "1.15.0"
+  },
+  "peerDependenciesMeta": {
+    "@remix-run/server-runtime": {
+      "optional": false
+    },
+    "@remix-run/node": {
+      "optional": true
+    },
+    "@remix-run/cloudflare": {
+      "optional": true
+    },
+    "@remix-run/deno": {
+      "optional": true
+    }
   },
   "dependencies": {
     "camelize-ts": "2.3.0",

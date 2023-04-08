@@ -1,4 +1,4 @@
-import { createSession } from '@remix-run/node';
+import { createSession } from '@remix-run/server-runtime';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCredentials, saveUserToSession } from './session.js';
 import type { SessionStore, UserCredentials } from '../Auth0RemixTypes.js';

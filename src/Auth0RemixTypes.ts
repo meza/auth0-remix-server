@@ -1,4 +1,4 @@
-import type { SessionStorage } from '@remix-run/node';
+import type { SessionStorage } from '@remix-run/server-runtime';
 import type { Camelize } from 'camelize-ts';
 import type { JsonObject, JsonValue, SetOptional } from 'type-fest';
 

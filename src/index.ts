@@ -1,4 +1,4 @@
-import { redirect } from '@remix-run/node';
+import { redirect } from '@remix-run/server-runtime';
 import * as jose from 'jose';
 import { ensureDomain } from './lib/ensureDomainFormat.js';
 import { getCredentials, saveUserToSession } from './lib/session.js';
@@ -16,7 +16,7 @@ import type {
   TokenError,
   AuthorizeOptions
 } from './Auth0RemixTypes.js';
-import type { AppLoadContext } from '@remix-run/node';
+import type { AppLoadContext } from '@remix-run/server-runtime';
 
 export enum Token {
   ID = 'id',

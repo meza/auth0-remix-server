@@ -1,4 +1,4 @@
 import '@testing-library/jest-dom';
-import { installGlobals } from '@remix-run/node';
+import { installGlobals } from '@remix-run/server-runtime';
 
 installGlobals();

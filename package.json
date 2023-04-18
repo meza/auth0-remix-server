@@ -133,7 +133,7 @@
     }
   },
   "dependencies": {
-    "camelize-ts": "2.4.0",
+    "camelize-ts": "2.5.0",
     "jose": "4.14.0"
   }
 }

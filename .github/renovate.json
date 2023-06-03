@@ -59,7 +59,13 @@
       "matchDepTypes": [
         "engines"
       ],
-      "automerge": true,
+      "automerge": false,
+      "rangeStrategy": "widen"
+    },
+    {
+      "matchDepTypes": [
+        "engines"
+      ],
       "rangeStrategy": "widen"
     }
   ],

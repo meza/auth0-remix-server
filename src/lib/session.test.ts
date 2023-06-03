@@ -1,4 +1,4 @@
-import { createSession } from '@remix-run/node';
+import { createSession } from '@remix-run/server-runtime';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCredentials, saveUserToSession } from './session.js';
 import type { SessionStore, UserCredentials } from '../Auth0RemixTypes.js';
@@ -48,7 +48,7 @@ describe('The session helper', () => {
       });
       const userCredentials: UserCredentials = {} as never;
       const sessionStore = undefined;
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { /* empty */ });
 
       const actual = await saveUserToSession(request, userCredentials, sessionStore);
       expect(actual).toEqual({});
@@ -84,6 +84,18 @@ describe('The session helper', () => {
 
       expect(sessionStore.store.getSession).toHaveBeenCalledWith('session-cookie');
       expect(sessionSpy).toHaveBeenCalledWith('session-key');
+    });
+
+    it('should throw if no session found in cookie', async () => {
+      const request = new Request('https://example.com');
+      const sessionStore: SessionStore = {
+        store: {
+          getSession: vi.fn()
+        }
+      } as never;
+      vi.mocked(sessionStore.store.getSession).mockResolvedValue(createSession());
+
+      expect(getCredentials(request, sessionStore)).rejects.toMatchObject({ message: 'Credentials not found' });
     });
   });
 });

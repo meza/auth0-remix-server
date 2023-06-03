@@ -71,7 +71,7 @@
     "@evilmartians/lefthook": "1.4.1",
     "@meza/tsconfig-base": "1.1.0",
     "@semantic-release/commit-analyzer": "10.0.0",
-    "@semantic-release/github": "9.0.0",
+    "@semantic-release/github": "9.0.2",
     "@semantic-release/npm": "10.0.3",
     "@semantic-release/release-notes-generator": "11.0.2",
     "@total-typescript/ts-reset": "0.4.2",

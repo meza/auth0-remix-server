@@ -59,11 +59,15 @@
       "matchDepTypes": [
         "engines"
       ],
+      "automerge": false,
+      "rangeStrategy": "widen"
+    },
+    {
+      "matchDepTypes": [
+        "engines"
+      ],
       "rangeStrategy": "widen"
     }
   ],
-  "schedule": [
-    "after 10pm and before 5am every weekday",
-    "every weekend"
-  ]
+  "schedule": ["at any time"]
 }

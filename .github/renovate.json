@@ -11,6 +11,7 @@
   ],
   "semanticCommits": "enabled",
   "semanticCommitType": "chore",
+  "rangeStrategy": "pin",
   "packageRules": [
     {
       "matchDepTypes": [
@@ -18,18 +19,6 @@
       ],
       "matchUpdateTypes": [
         "minor",
-        "patch",
-        "pin",
-        "digest"
-      ],
-      "automerge": true,
-      "semanticCommitType": "chore"
-    },
-    {
-      "matchDepTypes": [
-        "dependencies"
-      ],
-      "matchUpdateTypes": [
         "patch"
       ],
       "automerge": true,
@@ -37,17 +26,42 @@
     },
     {
       "matchDepTypes": [
+        "devDependencies"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "semanticCommitType": "chore"
+    },
+    {
+      "matchDepTypes": [
         "dependencies"
       ],
       "matchUpdateTypes": [
-        "minor"
+        "minor",
+        "patch"
       ],
       "automerge": true,
       "semanticCommitType": "fix"
+    },
+    {
+      "matchDepTypes": [
+        "dependencies"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "semanticCommitType": "fix"
+    },
+    {
+      "matchDepTypes": [
+        "engines"
+      ],
+      "automerge": true,
+      "rangeStrategy": "widen"
     }
   ],
-  "schedule": [
-    "after 10pm and before 5am every weekday",
-    "every weekend"
-  ]
+  "schedule": ["at any time"]
 }

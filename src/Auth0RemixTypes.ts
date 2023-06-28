@@ -75,4 +75,5 @@ export interface AuthorizeOptions {
 
 export interface HandleCallbackOptions {
   onSuccessRedirect?: string;
+  onFailedRedirect?: string;
 }

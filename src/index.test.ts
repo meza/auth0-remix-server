@@ -1,13 +1,13 @@
 /* eslint-disable max-nested-callbacks */
-import type { AppLoadContext } from '@remix-run/node';
-import { redirect } from '@remix-run/node';
+import { redirect } from '@remix-run/server-runtime';
 import * as jose from 'jose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Auth0RemixServer, Token } from './index.js';
 import { getCredentials, saveUserToSession } from './lib/session.js';
+import { Auth0RemixServer, Token } from './index.js';
 import type { Auth0RemixOptions } from './Auth0RemixTypes.js';
+import type { AppLoadContext } from '@remix-run/server-runtime';
 
-vi.mock('@remix-run/node');
+vi.mock('@remix-run/server-runtime');
 vi.mock('./lib/session');
 vi.mock('jose');
 
@@ -21,6 +21,8 @@ class JWTExpired extends Error {
   override name = 'JWTExpired';
   code = 'ERR_JWT_EXPIRED';
 }
+
+const noop = () => { /* empty */ };
 
 describe('Auth0 Remix Server', () => {
   /* eslint-disable camelcase */
@@ -426,9 +428,9 @@ describe('Auth0 Remix Server', () => {
   describe('getting the user', () => {
     describe('when there are no credentials returned', () => {
       it<LocalTestContext>('redirects to the failed login url', async ({ authOptions }) => {
-        vi.mocked(getCredentials).mockResolvedValueOnce(undefined as never);
+        vi.mocked(getCredentials).mockRejectedValue(new Error('Credentials not found'));
 
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(noop);
 
         const request = new Request('https://it-doesnt-matter.com');
         const context: AppLoadContext = {};
@@ -510,7 +512,7 @@ describe('Auth0 Remix Server', () => {
             ok: false
           } as never);
 
-          const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+          const consoleSpy = vi.spyOn(console, 'error').mockImplementation(noop);
 
           const request = new Request('https://it-doesnt-matter.com');
 
@@ -526,7 +528,7 @@ describe('Auth0 Remix Server', () => {
         vi.mocked(getCredentials).mockResolvedValueOnce({} as never);
         vi.mocked(jose.jwtVerify).mockRejectedValue(new Error('test-error'));
 
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(noop);
 
         const request = new Request('https://it-doesnt-matter.com');
         const context: AppLoadContext = {};
@@ -552,7 +554,7 @@ describe('Auth0 Remix Server', () => {
           });
 
           it<LocalTestContext>('redirects to the failed login url', async ({ authOptions, appLoadContext }) => {
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(noop);
             const request = new Request('https://it-doesnt-matter.com');
 
             const authorizer = new Auth0RemixServer(authOptions);
@@ -572,7 +574,7 @@ describe('Auth0 Remix Server', () => {
             vi.mocked(fetch).mockResolvedValue({
               ok: false
             } as never);
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(noop);
             const request = new Request('https://it-doesnt-matter.com');
 
             const authorizer = new Auth0RemixServer(authOptions);

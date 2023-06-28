@@ -18,6 +18,12 @@ import type {
 } from './Auth0RemixTypes.js';
 import type { AppLoadContext } from '@remix-run/server-runtime';
 
+export * from './Auth0RemixTypes.js';
+
+// This is just an export; it does not need to be tested
+/* c8 ignore next */
+export const TokenErrorInstance = jose.errors.JOSEError;
+
 export enum Token {
   ID = 'id',
   ACCESS = 'access'
@@ -120,6 +126,12 @@ export class Auth0RemixServer {
     authorizationURL.searchParams.set('audience', this.clientCredentials.audience);
     if (this.clientCredentials.organization) {
       authorizationURL.searchParams.set('organization', this.clientCredentials.organization);
+    }
+    if (opts.connection) {
+      authorizationURL.searchParams.set('connection', opts.connection);
+    }
+    if (opts.prompt) {
+      authorizationURL.searchParams.set('prompt', opts.prompt);
     }
     if (opts.forceLogin) {
       authorizationURL.searchParams.set('prompt', 'login');

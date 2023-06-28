@@ -134,10 +134,12 @@ export class Auth0RemixServer {
   public async handleCallback(request: Request, options: HandleCallbackOptions): Promise<UserCredentials> {
     const formData = await request.formData();
     const code = formData.get('code');
+    const failedRedirectUrl = new URL(options.onFailedRedirect ?? this.failedLoginRedirect);
 
     if (!code) {
       console.error('No code found in callback');
-      throw redirect(this.failedLoginRedirect);
+      failedRedirectUrl.searchParams.set('error', 'no_code');
+      throw redirect(failedRedirectUrl.toString());
     }
 
     const body = new URLSearchParams();
@@ -155,7 +157,13 @@ export class Auth0RemixServer {
 
     if (!response.ok) {
       console.error('Failed to get token from Auth0');
-      throw redirect(this.failedLoginRedirect);
+      if (response.body) {
+        const data = await response.json();
+        failedRedirectUrl.searchParams.set('error', data.error ?? 'no_response');
+      } else {
+        failedRedirectUrl.searchParams.set('error', response?.body ?? 'no_response');
+      }
+      throw redirect(failedRedirectUrl.toString());
     }
 
     const data = (await response.json()) as Auth0Credentials;

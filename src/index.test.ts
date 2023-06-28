@@ -119,10 +119,14 @@ describe('Auth0 Remix Server', () => {
           body: new FormData()
         });
 
+        vi.mocked(fetch).mockResolvedValue({
+          ok: false // return a non-ok response
+        } as never);
+
         await expect(authorizer.handleCallback(request, {})).rejects.toThrowError(redirectError); // a redirect happened
 
         const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
-        expect(redirectUrl).toEqual(authOptions.failedLoginRedirect);
+        expect(redirectUrl).toEqual(`${authOptions.failedLoginRedirect}?error=no_code`);
 
         expect(consoleSpy).toHaveBeenCalledWith('No code found in callback');
       });
@@ -131,13 +135,15 @@ describe('Auth0 Remix Server', () => {
     describe('when there is a code in the exchange', () => {
       it<LocalTestContext>('redirects to the failed login url if the token exchange fails', async ({ authOptions }) => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-        vi.mocked(fetch).mockResolvedValue({
-          ok: false // return a non-ok response
-        } as never);
-
         const authorizer = new Auth0RemixServer(authOptions);
         const formData = new FormData();
         formData.append('code', 'test-code');
+
+        vi.mocked(fetch).mockResolvedValue({
+          ok: false, // return a non-ok response
+          body: true, // only need to pass a truthy check
+          json: () => Promise.resolve({ error: 'The expected error' })
+        } as never);
 
         const request = new Request('https://it-doesnt-matter.com', {
           method: 'POST',
@@ -147,12 +153,70 @@ describe('Auth0 Remix Server', () => {
         await expect(authorizer.handleCallback(request, {})).rejects.toThrowError(redirectError); // a redirect happened
 
         const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
-        expect(redirectUrl).toEqual(authOptions.failedLoginRedirect);
+        expect(redirectUrl).toEqual(`${authOptions.failedLoginRedirect}?error=The expected error`);
 
         const fetchArgs = vi.mocked(fetch).mock.calls[0];
         expect(fetchArgs[0]).toMatchInlineSnapshot('"https://test.domain.com/oauth/token"');
         expect(fetchArgs[1]).toMatchSnapshot();
         expect(consoleSpy).toHaveBeenCalledWith('Failed to get token from Auth0');
+      });
+
+      describe('and no error body is returned', () => {
+        it<LocalTestContext>('redirects with a generic error param value', async ({ authOptions }) => {
+          const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+          const authorizer = new Auth0RemixServer(authOptions);
+          const formData = new FormData();
+          formData.append('code', 'test-code');
+
+          vi.mocked(fetch).mockResolvedValue({
+            ok: false // return a non-ok response
+          } as never);
+
+          const request = new Request('https://it-doesnt-matter.com', {
+            method: 'POST',
+            body: formData
+          });
+
+          await expect(authorizer.handleCallback(request, {})).rejects.toThrowError(redirectError); // a redirect happened
+
+          const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+          expect(redirectUrl).toEqual(`${authOptions.failedLoginRedirect}?error=no_response`);
+
+          const fetchArgs = vi.mocked(fetch).mock.calls[0];
+          expect(fetchArgs[0]).toMatchInlineSnapshot('"https://test.domain.com/oauth/token"');
+          expect(fetchArgs[1]).toMatchSnapshot();
+          expect(consoleSpy).toHaveBeenCalledWith('Failed to get token from Auth0');
+        });
+      });
+
+      describe('and the failedLoginRedirect contains a query string parameter', () => {
+        it<LocalTestContext>('redirects with a well-formed path containing the error parameter', async ({
+          authOptions
+        }) => {
+          const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+          const authorizer = new Auth0RemixServer({ ...authOptions, failedLoginRedirect: '/logout?failed=hellyes' });
+          const formData = new FormData();
+          formData.append('code', 'test-code');
+
+          vi.mocked(fetch).mockResolvedValue({
+            ok: false // return a non-ok response
+          } as never);
+
+          const request = new Request('https://it-doesnt-matter.com', {
+            method: 'POST',
+            body: formData
+          });
+
+          await expect(authorizer.handleCallback(request, {})).rejects.toThrowError(redirectError); // a redirect happened
+
+          const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+          expect(redirectUrl).toEqual(`${authOptions.failedLoginRedirect}?failed=hellyes&error=no_response`);
+
+          const fetchArgs = vi.mocked(fetch).mock.calls[0];
+          expect(fetchArgs[0]).toMatchInlineSnapshot('"https://test.domain.com/oauth/token"');
+          expect(fetchArgs[1]).toMatchSnapshot();
+          expect(consoleSpy).toHaveBeenCalledWith('Failed to get token from Auth0');
+        });
       });
 
       describe('and there is no success url', () => {

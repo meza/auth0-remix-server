@@ -134,12 +134,11 @@ export class Auth0RemixServer {
   public async handleCallback(request: Request, options: HandleCallbackOptions): Promise<UserCredentials> {
     const formData = await request.formData();
     const code = formData.get('code');
-    const failedRedirectUrl = new URL(options.onFailedRedirect ?? this.failedLoginRedirect);
+    const failedRedirectUrl = options.onFailedRedirect ?? this.failedLoginRedirect;
 
     if (!code) {
       console.error('No code found in callback');
-      failedRedirectUrl.searchParams.set('error', 'no_code');
-      throw redirect(failedRedirectUrl.toString());
+      throw redirect(this.addQueryStringParam(failedRedirectUrl, 'error', 'no_code'));
     }
 
     const body = new URLSearchParams();
@@ -156,14 +155,7 @@ export class Auth0RemixServer {
     });
 
     if (!response.ok) {
-      console.error('Failed to get token from Auth0');
-      if (response.body) {
-        const data = await response.json();
-        failedRedirectUrl.searchParams.set('error', data.error ?? 'no_response');
-      } else {
-        failedRedirectUrl.searchParams.set('error', response?.body ?? 'no_response');
-      }
-      throw redirect(failedRedirectUrl.toString());
+      return await this.handleFailedCallback(response, failedRedirectUrl);
     }
 
     const data = (await response.json()) as Auth0Credentials;
@@ -286,5 +278,24 @@ export class Auth0RemixServer {
 
     const data = (await response.json()) as Auth0UserProfile;
     return transformUserData(data);
+  }
+
+  private async handleFailedCallback(response: Response, failedRedirectUrl: string): Promise<never> {
+    console.error('Failed to get token from Auth0');
+    let error = 'no_response';
+    if (response.body) {
+      const data = await response.json();
+      if (data.error) {
+        error = data.error;
+      }
+    }
+
+    throw redirect(this.addQueryStringParam(failedRedirectUrl, 'error', error));
+  }
+
+  private addQueryStringParam(path: string, paramKey: string, paramValue: string) {
+    const separator = path.includes('?') ? '&' : '?';
+
+    return [path, separator, paramKey, '=', paramValue].join('');
   }
 }

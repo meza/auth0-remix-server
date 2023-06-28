@@ -104,7 +104,8 @@ export class Auth0RemixServer {
       'offline_access', // required for refresh token
       'openid', // required for id_token and the /userinfo api endpoint
       'profile',
-      'email'];
+      'email'
+    ];
     const authorizationURL = new URL(this.auth0Urls.authorizationURL);
     authorizationURL.searchParams.set('response_type', 'code');
     authorizationURL.searchParams.set('response_mode', 'form_post');
@@ -128,12 +129,11 @@ export class Auth0RemixServer {
   public async handleCallback(request: Request, options: HandleCallbackOptions): Promise<never | UserCredentials> {
     const formData = await request.formData();
     const code = formData.get('code') as string;
-    const failedRedirectUrl = new URL(options.onFailedRedirect ?? this.failedLoginRedirect);
+    const failedRedirectUrl = options.onFailedRedirect ?? this.failedLoginRedirect;
 
     if (!code) {
       console.error('No code found in callback');
-      failedRedirectUrl.searchParams.set('error', 'no_code');
-      throw redirect(failedRedirectUrl.toString());
+      throw redirect(this.addQueryStringParam(failedRedirectUrl, 'error', 'no_code'));
     }
 
     const body = new URLSearchParams();
@@ -144,20 +144,13 @@ export class Auth0RemixServer {
     body.set('redirect_uri', this.callbackURL);
 
     const response = await fetch(this.auth0Urls.tokenURL, {
-      headers: { 'content-type' : 'application/x-www-form-urlencoded' },
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
       method: 'POST',
       body: body.toString()
     });
 
     if (!response.ok) {
-      console.error('Failed to get token from Auth0');
-      if (response.body) {
-        const data = await response.json();
-        failedRedirectUrl.searchParams.set('error', data.error ?? 'no_response');
-      } else {
-        failedRedirectUrl.searchParams.set('error', response?.body ?? 'no_response');
-      }
-      throw redirect(failedRedirectUrl.toString());
+      return await this.handleFailedCallback(response, failedRedirectUrl);
     }
 
     const data = await response.json();
@@ -205,7 +198,6 @@ export class Auth0RemixServer {
       await this.decodeToken(credentials.accessToken, Token.ACCESS);
 
       return await this.getUserProfile(credentials);
-
     } catch (error) {
       if ((error as TokenError).code === 'ERR_JWT_EXPIRED') {
         if (!context.refresh) {
@@ -219,7 +211,6 @@ export class Auth0RemixServer {
 
         await context.refresh;
         return await this.getUser(request, context);
-
       }
 
       console.error('Failed to verify JWT', error);
@@ -240,7 +231,7 @@ export class Auth0RemixServer {
     body.set('refresh_token', credentials.refreshToken);
 
     const response = await fetch(this.auth0Urls.tokenURL, {
-      headers: { 'content-type' : 'application/x-www-form-urlencoded' },
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
       method: 'POST',
       body: body.toString()
     });
@@ -280,5 +271,24 @@ export class Auth0RemixServer {
 
     const data = await response.json();
     return transformUserData(data);
+  }
+
+  private async handleFailedCallback(response: Response, failedRedirectUrl: string): Promise<never> {
+    console.error('Failed to get token from Auth0');
+    let error = 'no_response';
+    if (response.body) {
+      const data = await response.json();
+      if (data.error) {
+        error = data.error;
+      }
+    }
+
+    throw redirect(this.addQueryStringParam(failedRedirectUrl, 'error', error));
+  }
+
+  private addQueryStringParam(path: string, paramKey: string, paramValue: string) {
+    const separator = path.includes('?') ? '&' : '?';
+
+    return [path, separator, paramKey, '=', paramValue].join('');
   }
 }

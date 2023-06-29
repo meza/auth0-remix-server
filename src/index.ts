@@ -285,7 +285,8 @@ export class Auth0RemixServer {
     let error = 'no_response';
     if (response.body) {
       const data = await response.json();
-      if (data.error) {
+
+      if (data && typeof data === 'object' && 'error' in data && data.error && typeof data.error === 'string') {
         error = data.error;
       }
     }

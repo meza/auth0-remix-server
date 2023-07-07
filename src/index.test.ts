@@ -72,7 +72,18 @@ describe('Auth0 Remix Server', () => {
       })).toThrowError(redirectError); // a redirect happened
 
       const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
-      expect(redirectUrl).toMatchSnapshot();
+      expect(redirectUrl).toContain('prompt=login');
+    });
+
+    it<LocalTestContext>('does silent auth if asked', ({ authOptions }) => {
+      const authorizer = new Auth0RemixServer(authOptions);
+
+      expect(() => authorizer.authorize({
+        silentAuth: true
+      })).toThrowError(redirectError); // a redirect happened
+
+      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+      expect(redirectUrl).toContain('prompt=none');
     });
 
     it<LocalTestContext>('works correctly when both are asked', ({ authOptions }) => {
@@ -84,7 +95,20 @@ describe('Auth0 Remix Server', () => {
       })).toThrowError(redirectError); // a redirect happened
 
       const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
-      expect(redirectUrl).toMatchSnapshot();
+      expect(redirectUrl).toContain('prompt=login');
+    });
+
+    it<LocalTestContext>('prioritizes the silent login over the force', ({ authOptions }) => {
+      const authorizer = new Auth0RemixServer(authOptions);
+
+      expect(() => authorizer.authorize({
+        forceLogin: true,
+        silentAuth: true
+      })).toThrowError(redirectError); // a redirect happened
+
+      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+      expect(redirectUrl).toContain('prompt=none');
+      expect(redirectUrl).not.toContain('prompt=login');
     });
 
     it<LocalTestContext>('forces the signup if asked', ({ authOptions }) => {
@@ -106,7 +130,7 @@ describe('Auth0 Remix Server', () => {
       })).toThrowError(redirectError); // a redirect happened
 
       const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
-      expect(redirectUrl).toMatchSnapshot();
+      expect(redirectUrl).toContain('connection=google');
     });
 
     it<LocalTestContext>('adds the organisation if needed', ({ authOptions }) => {

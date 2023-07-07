@@ -18,6 +18,8 @@ exports[`Auth0 Remix Server > the authorization process > adds the connection wh
 
 exports[`Auth0 Remix Server > the authorization process > adds the organisation if needed 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&organization=test-org"`;
 
+exports[`Auth0 Remix Server > the authorization process > does silent auth if asked 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&prompt=none"`;
+
 exports[`Auth0 Remix Server > the authorization process > forces the login if asked 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&prompt=login"`;
 
 exports[`Auth0 Remix Server > the authorization process > forces the signup if asked 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&screen_hint=signup"`;

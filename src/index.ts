@@ -124,6 +124,9 @@ export class Auth0RemixServer {
     if (opts.forceLogin) {
       authorizationURL.searchParams.set('prompt', 'login');
     }
+    if (opts.silentAuth) {
+      authorizationURL.searchParams.set('prompt', 'none');
+    }
     if (opts.forceSignup) {
       authorizationURL.searchParams.set('screen_hint', 'signup');
     }

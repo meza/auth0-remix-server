@@ -255,13 +255,32 @@ export const action: ActionFunction = () => {
 };
 ```
 
-Combining the `forceLogin` and `forceSignup` parameters to control the behavior of the authorization request produce the following results:
+### Forcing a silent authentication
+
+You can force the user to the sign-up page by passing in the `forceSignup` option to the `authorize` method.
+
+```tsx
+// src/routes/auth/auth0.ts
+import { authenticator } from '../../auth.server';
+import type { ActionFunction } from '@remix-run/node';
+
+export const action: ActionFunction = () => {
+  authenticator.authorize({
+    silentAuth: true
+  });
+};
+```
+
+Combining the `forceLogin`, `forceSignup` and `silentAuth` parameters to control the behavior of the authorization request produce the following results:
 
 | parameter                               | No existing session   | Existing session              |
 |-----------------------------------------|-----------------------|-------------------------------|
 | `{forceSignup: true}`                   | Shows the signup page | Redirects to the callback url |
 | `{forceLogin: true}`                    | Shows the login page  | Shows the login page          |
 | `{forceSignup: true, forceLogin: true}` | Shows the signup page | Shows the signup page         |
+| `{silentAuth: true, forceLogin: true}`  | Silent auth           | Silent auth                   |
+| `{silentAuth: true, forceSignup: true}` | Needs testing         | Needs testing                 |
+
 
 ### Adding a connection
 

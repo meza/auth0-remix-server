@@ -5,6 +5,9 @@ on: [ push, pull_request ]
 env:
   LEFTHOOK: 0
 
+permissions:
+  pull-requests: write
+
 jobs:
   verify:
     uses: meza/shared-github-workflows/.github/workflows/default-node-npm-ci.yml@main

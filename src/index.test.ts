@@ -98,6 +98,17 @@ describe('Auth0 Remix Server', () => {
       expect(redirectUrl).toMatchSnapshot();
     });
 
+    it<LocalTestContext>('adds the connection when needed', ({ authOptions }) => {
+      const authorizer = new Auth0RemixServer(authOptions);
+
+      expect(() => authorizer.authorize({
+        connection: 'google'
+      })).toThrowError(redirectError); // a redirect happened
+
+      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+      expect(redirectUrl).toMatchSnapshot();
+    });
+
     it<LocalTestContext>('adds the organisation if needed', ({ authOptions }) => {
       authOptions.clientDetails.organization = 'test-org';
       const authorizer = new Auth0RemixServer(authOptions);

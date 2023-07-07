@@ -14,6 +14,8 @@ exports[`Auth0 Remix Server > logging out > calls the correct url 1`] = `"https:
 
 exports[`Auth0 Remix Server > logging out > includes the headers supplied 1`] = `"https://test.domain.com/v2/logout?client_id=clientId&returnTo=http%3A%2F%2Flocalhost%3A3000%2Flogout-with-headers"`;
 
+exports[`Auth0 Remix Server > the authorization process > adds the connection when needed 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&connection=google"`;
+
 exports[`Auth0 Remix Server > the authorization process > adds the organisation if needed 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&organization=test-org"`;
 
 exports[`Auth0 Remix Server > the authorization process > forces the login if asked 1`] = `"https://test.domain.com/authorize?response_type=code&response_mode=form_post&client_id=clientId&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback&scope=offline_access+openid+profile+email&audience=https%3A%2F%2Ftest.domain.com%2Fapi%2Fv2%2F&prompt=login"`;

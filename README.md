@@ -263,6 +263,21 @@ Combining the `forceLogin` and `forceSignup` parameters to control the behavior 
 | `{forceLogin: true}`                    | Shows the login page  | Shows the login page          |
 | `{forceSignup: true, forceLogin: true}` | Shows the signup page | Shows the signup page         |
 
+### Adding a connection
+
+You can also specify the name of the connection configured to your application.
+
+```tsx
+// src/routes/auth/auth0.ts
+import { authenticator } from '../../auth.server';
+import type { ActionFunction } from '@remix-run/node';
+
+export const action: ActionFunction = () => {
+  authenticator.authorize({
+    connection: 'google'
+  });
+};
+```
 
 ## Errors
 

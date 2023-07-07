@@ -127,6 +127,9 @@ export class Auth0RemixServer {
     if (opts.forceSignup) {
       authorizationURL.searchParams.set('screen_hint', 'signup');
     }
+    if (opts.connection) {
+      authorizationURL.searchParams.set('connection', opts.connection);
+    }
 
     throw redirect(authorizationURL.toString());
   }

@@ -82,6 +82,7 @@ export interface Auth0RemixOptions {
 export interface AuthorizeOptions {
   forceLogin?: boolean;
   forceSignup?: boolean;
+  connection?: string;
 }
 
 export interface HandleCallbackOptions {

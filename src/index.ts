@@ -111,11 +111,19 @@ export class Auth0RemixServer {
       'profile',
       'email'
     ];
+
+    const cbUrl = new URL(this.callbackURL);
+    if (opts.callbackParams) {
+      Object.entries(opts.callbackParams).forEach(([key, value]) => {
+        cbUrl.searchParams.set(key, value);
+      });
+    }
+
     const authorizationURL = new URL(this.auth0Urls.authorizationURL);
     authorizationURL.searchParams.set('response_type', 'code');
     authorizationURL.searchParams.set('response_mode', 'form_post');
     authorizationURL.searchParams.set('client_id', this.clientCredentials.clientID);
-    authorizationURL.searchParams.set('redirect_uri', this.callbackURL);
+    authorizationURL.searchParams.set('redirect_uri', cbUrl.toString());
     authorizationURL.searchParams.set('scope', scope.join(' '));
     authorizationURL.searchParams.set('audience', this.clientCredentials.audience);
     if (this.clientCredentials.organization) {

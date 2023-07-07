@@ -142,6 +142,24 @@ describe('Auth0 Remix Server', () => {
       const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
       expect(redirectUrl).toMatchSnapshot();
     });
+
+    it<LocalTestContext>('adds custom callback url parameters', ({ authOptions }) => {
+      const authorizer = new Auth0RemixServer(authOptions);
+
+      expect(() => authorizer.authorize({
+        callbackParams: {
+          test1: 'testA',
+          test2: 'testB',
+          test3: 'testC'
+        }
+      })).toThrowError(redirectError); // a redirect happened
+
+      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+      expect(redirectUrl).toContain('test1%3DtestA');
+      expect(redirectUrl).toContain('test2%3DtestB');
+      expect(redirectUrl).toContain('test3%3DtestC');
+      expect(redirectUrl).toMatchSnapshot();
+    });
   });
 
   describe('handling the callback token exchange', () => {

@@ -298,6 +298,24 @@ export const action: ActionFunction = () => {
 };
 ```
 
+### Adding custom redirect url parameters
+
+You can also specify custom parameters to be added to the redirect url.
+
+```tsx
+// src/routes/auth/auth0.ts
+import { authenticator } from '../../auth.server';
+import type { ActionFunction } from '@remix-run/node';
+
+export const action: ActionFunction = () => {
+  authenticator.authorize({
+    callbackParams: {
+      foo: 'bar'
+    }
+  });
+};
+```
+
 ## Errors
 
 The verification errors each have a `code` property that you can use to determine what went wrong.

@@ -148,10 +148,13 @@ export class Auth0RemixServer {
   public async handleCallback(request: Request, options: HandleCallbackOptions): Promise<UserCredentials> {
     const formData = await request.formData();
     const code = formData.get('code');
+    const redirectUrl = options.onFailureRedirect || this.failedLoginRedirect;
+    const searchParams = new URLSearchParams();
 
     if (!code) {
       console.error('No code found in callback');
-      throw redirect(this.failedLoginRedirect);
+      searchParams.set('error', 'no_code');
+      throw redirect(redirectUrl.concat('?', searchParams.toString()));
     }
 
     const body = new URLSearchParams();
@@ -169,7 +172,8 @@ export class Auth0RemixServer {
 
     if (!response.ok) {
       console.error('Failed to get token from Auth0');
-      throw redirect(this.failedLoginRedirect);
+      searchParams.set('error', await this.getErrorReason(response));
+      throw redirect(redirectUrl.concat('?', searchParams.toString()));
     }
 
     const data = (await response.json()) as Auth0Credentials;
@@ -292,5 +296,26 @@ export class Auth0RemixServer {
 
     const data = (await response.json()) as Auth0UserProfile;
     return transformUserData(data);
+  }
+
+  private async getErrorReason(response: Response): Promise<string> {
+    if (String(response.status).startsWith('5')) {
+      console.error('Auth0 is having a moment');
+      return 'auth0_down';
+    }
+
+    if (String(response.status).startsWith('4')) {
+      // The camelcase comes from Auth0
+      // eslint-disable-next-line camelcase
+      const responseBody = (await response.json()) as {error: string, error_description: string};
+      console.error('Auth0 rejected our request');
+      console.error({
+        error: responseBody.error,
+        description: responseBody.error_description
+      });
+      return responseBody.error;
+    }
+
+    return 'unknown';
   }
 }

@@ -316,7 +316,32 @@ export const action: ActionFunction = () => {
 };
 ```
 
+### Adding a redirect url override for each authorization request
+
+You can also specify a redirect url to be used for each authorization request.
+This will override the default redirect url that you specified when you created the authenticator.
+
+```tsx
+// src/routes/auth/callback.tsx
+import { authenticator } from '../../auth.server';
+import type { ActionFunction } from '@remix-run/node';
+
+export const action: ActionFunction = async ({ request }) => {
+  await authenticator.handleCallback(request, {
+    onSuccessRedirect: '/dashboard', // change this to be wherever you want to redirect to after a successful login
+    onFailureRedirect: '/login' // change this to be wherever you want to redirect to after a failed login
+  });
+};
+```
+
 ## Errors
+
+### Authorization errors
+
+When the authorization process fails, the failure redirect url will be called with an `error` query parameter that
+contains the error code auth0 has given us.
+
+### Verification errors
 
 The verification errors each have a `code` property that you can use to determine what went wrong.
 

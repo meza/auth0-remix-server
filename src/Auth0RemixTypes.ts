@@ -92,4 +92,5 @@ export type AuthorizeOptions =
 
 export interface HandleCallbackOptions {
   onSuccessRedirect?: string;
+  onFailureRedirect?: string;
 }

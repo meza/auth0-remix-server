@@ -1,7 +1,7 @@
 /* eslint-disable max-nested-callbacks */
 import { redirect } from '@remix-run/server-runtime';
 import * as jose from 'jose';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, SpyInstance, vi } from 'vitest';
 import { getCredentials, saveUserToSession } from './lib/session.js';
 import { Auth0RemixServer, Token } from './index.js';
 import type { Auth0RemixOptions } from './Auth0RemixTypes.js';
@@ -178,32 +178,61 @@ describe('Auth0 Remix Server', () => {
         await expect(authorizer.handleCallback(request, {})).rejects.toThrowError(redirectError); // a redirect happened
 
         const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
-        expect(redirectUrl).toEqual(authOptions.failedLoginRedirect);
+        expect(redirectUrl).toEqual(authOptions.failedLoginRedirect + '?error=no_code');
+
+        expect(consoleSpy).toHaveBeenCalledWith('No code found in callback');
+      });
+
+      it<LocalTestContext>('redirects to the overriden failed login url', async ({ authOptions }) => {
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        const authorizer = new Auth0RemixServer(authOptions);
+        const request = new Request('https://it-doesnt-matter.com', {
+          method: 'POST',
+          body: new FormData()
+        });
+
+        await expect(authorizer.handleCallback(request, {
+          onFailureRedirect: '/redirected'
+        })).rejects.toThrowError(redirectError); // a redirect happened
+
+        const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+        expect(redirectUrl).toEqual('/redirected?error=no_code');
 
         expect(consoleSpy).toHaveBeenCalledWith('No code found in callback');
       });
     });
 
     describe('when there is a code in the exchange', () => {
-      it<LocalTestContext>('redirects to the failed login url if the token exchange fails', async ({ authOptions }) => {
-        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-        vi.mocked(fetch).mockResolvedValue({
-          ok: false // return a non-ok response
-        } as never);
+      let consoleSpy: SpyInstance;
+      let authorizer: Auth0RemixServer;
+      let request: Request;
 
-        const authorizer = new Auth0RemixServer(authOptions);
+      beforeEach<LocalTestContext>(({ authOptions }) => {
+        consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        authorizer = new Auth0RemixServer(authOptions);
         const formData = new FormData();
         formData.append('code', 'test-code');
 
-        const request = new Request('https://it-doesnt-matter.com', {
+        request = new Request('https://it-doesnt-matter.com', {
           method: 'POST',
           body: formData
         });
+      });
+
+      it<LocalTestContext>('redirects to the failed login url if the token exchange fails', async ({ authOptions }) => {
+        vi.mocked(fetch).mockResolvedValue({
+          ok: false, // return a non-ok response
+          status: 400,
+          json: async () => ({
+            error: 'invalid_grant',
+            error_description: 'Invalid authorization code'
+          })
+        } as never);
 
         await expect(authorizer.handleCallback(request, {})).rejects.toThrowError(redirectError); // a redirect happened
 
         const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
-        expect(redirectUrl).toEqual(authOptions.failedLoginRedirect);
+        expect(redirectUrl).toEqual(authOptions.failedLoginRedirect + '?error=invalid_grant');
 
         const fetchArgs = vi.mocked(fetch).mock.calls[0];
         expect(fetchArgs[0]).toMatchInlineSnapshot('"https://test.domain.com/oauth/token"');
@@ -211,8 +240,51 @@ describe('Auth0 Remix Server', () => {
         expect(consoleSpy).toHaveBeenCalledWith('Failed to get token from Auth0');
       });
 
+      it<LocalTestContext>('redirects to the overridden failed login url if the token exchange fails', async () => {
+        vi.mocked(fetch).mockResolvedValue({
+          ok: false, // return a non-ok response
+          status: 401,
+          json: async () => ({
+            error: 'unauthorized',
+            error_description: 'Invalid authorization code again'
+          })
+        } as never);
+
+        await expect(authorizer.handleCallback(request, {
+          onFailureRedirect: '/redirected'
+        })).rejects.toThrowError(redirectError); // a redirect happened
+
+        const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+        expect(redirectUrl).toEqual('/redirected?error=unauthorized');
+      });
+
+      it<LocalTestContext>('handles auth0 failures', async () => {
+        vi.mocked(fetch).mockResolvedValue({
+          ok: false, // return a non-ok response
+          status: 500
+        } as never);
+
+        await expect(authorizer.handleCallback(request, {
+          onFailureRedirect: '/redirected'
+        })).rejects.toThrowError(redirectError); // a redirect happened
+
+        const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+        expect(redirectUrl).toEqual('/redirected?error=auth0_down');
+      });
+
+      it<LocalTestContext>('handles unknown failures', async ({ authOptions }) => {
+        vi.mocked(fetch).mockResolvedValue({
+          ok: false // return a non-ok response
+        } as never);
+
+        await expect(authorizer.handleCallback(request, {})).rejects.toThrowError(redirectError); // a redirect happened
+
+        const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+        expect(redirectUrl).toEqual(authOptions.failedLoginRedirect + '?error=unknown');
+      });
+
       describe('and there is no success url', () => {
-        it<LocalTestContext>('returns the user profile', async ({ authOptions }) => {
+        it('returns the user profile', async () => {
           const auth0Response = {
             access_token: 'test-access-token',
             id_token: 'test-id-token',
@@ -224,14 +296,6 @@ describe('Auth0 Remix Server', () => {
             json: () => Promise.resolve(auth0Response)
           } as never);
 
-          const formData = new FormData();
-          formData.append('code', 'test-code');
-          const request = new Request('https://it-doesnt-matter.com', {
-            method: 'POST',
-            body: formData
-          });
-
-          const authorizer = new Auth0RemixServer(authOptions);
           const actual = await authorizer.handleCallback(request, {});
 
           expect(actual).toMatchInlineSnapshot(`
@@ -246,6 +310,7 @@ describe('Auth0 Remix Server', () => {
 
         it<LocalTestContext>('includes the refresh token if the rotation is set', async ({ authOptions }) => {
           authOptions.refreshTokenRotationEnabled = true;
+          authorizer = new Auth0RemixServer(authOptions);
           const auth0Response = {
             access_token: 'test-access-token2',
             id_token: 'test-id-token2',
@@ -258,14 +323,6 @@ describe('Auth0 Remix Server', () => {
             json: () => Promise.resolve(auth0Response)
           } as never);
 
-          const formData = new FormData();
-          formData.append('code', 'test-code');
-          const request = new Request('https://it-doesnt-matter.com', {
-            method: 'POST',
-            body: formData
-          });
-
-          const authorizer = new Auth0RemixServer(authOptions);
           const actual = await authorizer.handleCallback(request, {});
 
           expect(actual).toMatchInlineSnapshot(`
@@ -296,13 +353,6 @@ describe('Auth0 Remix Server', () => {
             ok: true, // return a non-ok response
             json: () => Promise.resolve(auth0Response)
           } as never);
-
-          const formData = new FormData();
-          formData.append('code', 'test-code');
-          const request = new Request('https://it-doesnt-matter.com', {
-            method: 'POST',
-            body: formData
-          });
 
           vi.mocked(saveUserToSession).mockResolvedValue({
             'some-cookie': 'data'
@@ -358,13 +408,6 @@ describe('Auth0 Remix Server', () => {
             ok: true, // return a non-ok response
             json: () => Promise.resolve(auth0Response)
           } as never);
-
-          const formData = new FormData();
-          formData.append('code', 'test-code');
-          const request = new Request('https://it-doesnt-matter.com', {
-            method: 'POST',
-            body: formData
-          });
 
           vi.mocked(saveUserToSession).mockResolvedValue({
             'some-cookie': 'data'

@@ -259,15 +259,13 @@ export class Auth0RemixServer {
       if ((error as TokenError).code === 'ERR_JWT_EXPIRED') {
         if (!context.refresh) {
           context.refresh = this.refreshCredentials(credentials);
-          const result = (await context.refresh) as UserCredentials;
-          const headers = await saveUserToSession(request, result, this.session);
-          throw redirect(request.url, {
-            headers: headers
-          });
         }
 
-        await context.refresh;
-        return await this.getUser(request, context);
+        const result = (await context.refresh) as UserCredentials;
+        const headers = await saveUserToSession(request, result, this.session);
+        throw redirect(request.url, {
+          headers: headers
+        });
       }
 
       console.error('Failed to verify JWT', error);

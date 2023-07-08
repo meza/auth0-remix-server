@@ -1024,29 +1024,6 @@ describe('Auth0 Remix Server', () => {
             });
 
           });
-
-          it<LocalTestContext>('returns the user when there is an ongoing refresh', async ({ authOptions }) => {
-
-            vi.mocked(jose.jwtVerify).mockResolvedValueOnce({} as never); // this will be the second call after the one in the beforeEach
-
-            vi.mocked(fetch).mockResolvedValue({
-              ok: true,
-              json: () => Promise.resolve({
-                name: 'test-user'
-              })
-            } as never);
-
-            const request = new Request('https://it-doesnt-matter.com');
-
-            const authorizer = new Auth0RemixServer(authOptions);
-            const actual = await authorizer.getUser(request, {
-              refresh: Promise.resolve()
-            });
-
-            expect(actual).toEqual({
-              name: 'test-user'
-            });
-          });
         });
       });
     });

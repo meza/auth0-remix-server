@@ -1,5 +1,11 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`Auth0 Remix Server > getting the user > when the access token is valid > and the user profile fetch fails > redirects to the failed url 1`] = `"/logout?error=test-error"`;
+
+exports[`Auth0 Remix Server > getting the user > when the token is expired > and there is no other loader refreshing the token > and there is a refresh token > redirects to the failed login url when the refresh fails 1`] = `"/logout?error=test-error2"`;
+
+exports[`Auth0 Remix Server > getting the user > when there are no credentials returned > redirects to the failed login url 1`] = `"/logout?error=no_credentials"`;
+
 exports[`Auth0 Remix Server > handling the callback token exchange > when there is a code in the exchange as a GET > redirects to the failed login url if the token exchange fails 2`] = `
 {
   "body": "grant_type=authorization_code&client_id=clientId&client_secret=clientSecret&code=test-code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback",

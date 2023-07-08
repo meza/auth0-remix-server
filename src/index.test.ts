@@ -724,6 +724,8 @@ describe('Auth0 Remix Server', () => {
 
         const authorizer = new Auth0RemixServer(authOptions);
         await expect(authorizer.getUser(request, context)).rejects.toThrowError(redirectError); // a redirect happened
+        const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+        expect(redirectUrl).toMatchSnapshot();
         expect(consoleSpy).toHaveBeenCalledWith('No credentials found');
       });
     });
@@ -796,7 +798,9 @@ describe('Auth0 Remix Server', () => {
           } as never;
 
           vi.mocked(fetch).mockResolvedValue({
-            ok: false
+            ok: false,
+            status: 400,
+            json: () => Promise.resolve({ error: 'test-error' })
           } as never);
 
           const consoleSpy = vi.spyOn(console, 'error').mockImplementation(noop);
@@ -806,6 +810,9 @@ describe('Auth0 Remix Server', () => {
           const authorizer = new Auth0RemixServer(authOptions);
           await expect(authorizer.getUser(request, {})).rejects.toThrowError(redirectError); // a redirect happened
           expect(consoleSpy).toHaveBeenCalledWith('Failed to get user profile from Auth0');
+          const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+          expect(redirectUrl).toMatchSnapshot();
+          expect(redirectUrl).toContain('error=test-error');
         });
       });
     });
@@ -859,7 +866,9 @@ describe('Auth0 Remix Server', () => {
 
           it<LocalTestContext>('redirects to the failed login url when the refresh fails', async ({ authOptions, appLoadContext }) => {
             vi.mocked(fetch).mockResolvedValue({
-              ok: false
+              ok: false,
+              status: 400,
+              json: () => Promise.resolve({ error: 'test-error2' })
             } as never);
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(noop);
             const request = new Request('https://it-doesnt-matter.com');
@@ -867,6 +876,9 @@ describe('Auth0 Remix Server', () => {
             const authorizer = new Auth0RemixServer(authOptions);
             await expect(authorizer.getUser(request, appLoadContext)).rejects.toThrowError(redirectError); // a redirect happened
             expect(consoleSpy).toHaveBeenCalledWith('Failed to refresh token from Auth0');
+            const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+            expect(redirectUrl).toMatchSnapshot();
+            expect(redirectUrl).toContain('error=test-error2');
           });
 
           it<LocalTestContext>('returns the correct credentials with the rotation off', async ({ authOptions, appLoadContext }) => {

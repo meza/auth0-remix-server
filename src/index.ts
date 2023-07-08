@@ -244,7 +244,7 @@ export class Auth0RemixServer {
       credentials = await getCredentials(request, this.session);
     } catch (err) {
       console.error('No credentials found');
-      throw redirect(this.failedLoginRedirect);
+      throw redirect(this.failedLoginRedirect + '?error=no_credentials');
     }
 
     try {
@@ -288,10 +288,12 @@ export class Auth0RemixServer {
       method: 'POST',
       body: body.toString()
     });
+    const searchParams = new URLSearchParams();
 
     if (!response.ok) {
       console.error('Failed to refresh token from Auth0');
-      throw redirect(this.failedLoginRedirect);
+      searchParams.set('error', await this.getErrorReason(response));
+      throw redirect(this.failedLoginRedirect.concat('?', searchParams.toString()));
     }
     const data = (await response.json()) as Auth0Credentials;
     const userData: UserCredentials = {
@@ -317,9 +319,12 @@ export class Auth0RemixServer {
       }
     });
 
+    const searchParams = new URLSearchParams();
+
     if (!response.ok) {
       console.error('Failed to get user profile from Auth0');
-      throw redirect(this.failedLoginRedirect);
+      searchParams.set('error', await this.getErrorReason(response));
+      throw redirect(this.failedLoginRedirect.concat('?', searchParams.toString()));
     }
 
     const data = (await response.json()) as Auth0UserProfile;

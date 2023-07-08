@@ -45,6 +45,7 @@ export class Auth0RemixServer {
   private readonly credentialsCallback: Auth0CredentialsCallback;
 
   constructor(auth0RemixOptions: Auth0RemixOptions) {
+    console.error('This is working ffs debug 0');
     this.domain = ensureDomain(auth0RemixOptions.clientDetails.domain);
 
     /**
@@ -239,15 +240,18 @@ export class Auth0RemixServer {
 
   public async getUser(request: Request, context: AppLoadContext): Promise<UserProfile> {
     let credentials: UserCredentials;
-
+    console.log('debug 1');
     try {
+      console.log('debug 2');
       credentials = await getCredentials(request, this.session);
     } catch (err) {
+      console.log('debug 3');
       console.error('No credentials found');
       throw redirect(this.failedLoginRedirect + '?error=no_credentials');
     }
 
     try {
+      console.log('debug 4');
       await this.decodeToken(credentials.accessToken, Token.ACCESS);
 
       return await this.getUserProfile(credentials);
@@ -283,6 +287,8 @@ export class Auth0RemixServer {
     body.set('client_secret', this.clientCredentials.clientSecret);
     body.set('refresh_token', credentials.refreshToken);
 
+    console.log('Refreshing token', credentials);
+
     const response = await fetch(this.auth0Urls.tokenURL, {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       method: 'POST',
@@ -313,6 +319,7 @@ export class Auth0RemixServer {
   }
 
   private async getUserProfile(credentials: UserCredentials): Promise<UserProfile> {
+    console.log('debug 5');
     const response = await fetch(this.auth0Urls.userProfileUrl, {
       headers: {
         Authorization: `Bearer ${credentials.accessToken}`
@@ -320,7 +327,7 @@ export class Auth0RemixServer {
     });
 
     const searchParams = new URLSearchParams();
-
+    console.log('debug 6');
     if (!response.ok) {
       console.error('Failed to get user profile from Auth0');
       searchParams.set('error', await this.getErrorReason(response));

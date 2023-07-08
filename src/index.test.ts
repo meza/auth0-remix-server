@@ -99,10 +99,13 @@ describe('Auth0 Remix Server', () => {
     });
 
     it<LocalTestContext>('prioritizes the silent login over the force', ({ authOptions }) => {
+      // this is for the not-typescript case where both can be passed
       const authorizer = new Auth0RemixServer(authOptions);
 
       expect(() => authorizer.authorize({
         forceLogin: true,
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         silentAuth: true
       })).toThrowError(redirectError); // a redirect happened
 

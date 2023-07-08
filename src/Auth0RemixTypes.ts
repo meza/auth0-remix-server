@@ -79,13 +79,16 @@ export interface Auth0RemixOptions {
   credentialsCallback?: Auth0CredentialsCallback;
 }
 
-export interface AuthorizeOptions {
+interface BaseAuthorizeOptions {
   callbackParams?: Record<string, string>;
-  connection?: string;
-  forceLogin?: boolean;
   forceSignup?: boolean;
-  silentAuth?: boolean;
+  connection?: string;
 }
+
+// Make the `silentAuth` and `forceLogin` options mutually exclusive
+export type AuthorizeOptions =
+  BaseAuthorizeOptions & { silentAuth?: boolean; forceLogin?: never; }
+  | BaseAuthorizeOptions & { forceLogin?: boolean; silentAuth?: never; }
 
 export interface HandleCallbackOptions {
   onSuccessRedirect?: string;

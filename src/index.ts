@@ -111,11 +111,19 @@ export class Auth0RemixServer {
       'profile',
       'email'
     ];
+
+    const cbUrl = new URL(this.callbackURL);
+    if (opts.callbackParams) {
+      Object.entries(opts.callbackParams).forEach(([key, value]) => {
+        cbUrl.searchParams.set(key, value);
+      });
+    }
+
     const authorizationURL = new URL(this.auth0Urls.authorizationURL);
     authorizationURL.searchParams.set('response_type', 'code');
     authorizationURL.searchParams.set('response_mode', 'form_post');
     authorizationURL.searchParams.set('client_id', this.clientCredentials.clientID);
-    authorizationURL.searchParams.set('redirect_uri', this.callbackURL);
+    authorizationURL.searchParams.set('redirect_uri', cbUrl.toString());
     authorizationURL.searchParams.set('scope', scope.join(' '));
     authorizationURL.searchParams.set('audience', this.clientCredentials.audience);
     if (this.clientCredentials.organization) {
@@ -124,8 +132,14 @@ export class Auth0RemixServer {
     if (opts.forceLogin) {
       authorizationURL.searchParams.set('prompt', 'login');
     }
+    if (opts.silentAuth) {
+      authorizationURL.searchParams.set('prompt', 'none');
+    }
     if (opts.forceSignup) {
       authorizationURL.searchParams.set('screen_hint', 'signup');
+    }
+    if (opts.connection) {
+      authorizationURL.searchParams.set('connection', opts.connection);
     }
 
     throw redirect(authorizationURL.toString());
@@ -134,10 +148,13 @@ export class Auth0RemixServer {
   public async handleCallback(request: Request, options: HandleCallbackOptions): Promise<UserCredentials> {
     const formData = await request.formData();
     const code = formData.get('code');
+    const redirectUrl = options.onFailureRedirect || this.failedLoginRedirect;
+    const searchParams = new URLSearchParams();
 
     if (!code) {
       console.error('No code found in callback');
-      throw redirect(this.failedLoginRedirect);
+      searchParams.set('error', 'no_code');
+      throw redirect(redirectUrl.concat('?', searchParams.toString()));
     }
 
     const body = new URLSearchParams();
@@ -155,7 +172,8 @@ export class Auth0RemixServer {
 
     if (!response.ok) {
       console.error('Failed to get token from Auth0');
-      throw redirect(this.failedLoginRedirect);
+      searchParams.set('error', await this.getErrorReason(response));
+      throw redirect(redirectUrl.concat('?', searchParams.toString()));
     }
 
     const data = (await response.json()) as Auth0Credentials;
@@ -278,5 +296,26 @@ export class Auth0RemixServer {
 
     const data = (await response.json()) as Auth0UserProfile;
     return transformUserData(data);
+  }
+
+  private async getErrorReason(response: Response): Promise<string> {
+    if (String(response.status).startsWith('5')) {
+      console.error('Auth0 is having a moment');
+      return 'auth0_down';
+    }
+
+    if (String(response.status).startsWith('4')) {
+      // The camelcase comes from Auth0
+      // eslint-disable-next-line camelcase
+      const responseBody = (await response.json()) as {error: string, error_description: string};
+      console.error('Auth0 rejected our request');
+      console.error({
+        error: responseBody.error,
+        description: responseBody.error_description
+      });
+      return responseBody.error;
+    }
+
+    return 'unknown';
   }
 }

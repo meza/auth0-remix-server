@@ -255,16 +255,93 @@ export const action: ActionFunction = () => {
 };
 ```
 
-Combining the `forceLogin` and `forceSignup` parameters to control the behavior of the authorization request produce the following results:
+### Forcing a silent authentication
 
-| parameter                               | No existing session   | Existing session              |
-|-----------------------------------------|-----------------------|-------------------------------|
-| `{forceSignup: true}`                   | Shows the signup page | Redirects to the callback url |
-| `{forceLogin: true}`                    | Shows the login page  | Shows the login page          |
-| `{forceSignup: true, forceLogin: true}` | Shows the signup page | Shows the signup page         |
+You can force the user to the sign-up page by passing in the `forceSignup` option to the `authorize` method.
 
+```tsx
+// src/routes/auth/auth0.ts
+import { authenticator } from '../../auth.server';
+import type { ActionFunction } from '@remix-run/node';
+
+export const action: ActionFunction = () => {
+  authenticator.authorize({
+    silentAuth: true
+  });
+};
+```
+
+Combining the `forceLogin`, `forceSignup` and `silentAuth` parameters to control the behavior of the authorization request produce the following results:
+
+| parameter                               | No existing session      | Existing session              |
+|-----------------------------------------|--------------------------|-------------------------------|
+| `{forceSignup: true}`                   | Shows the signup page    | Redirects to the callback url |
+| `{forceLogin: true}`                    | Shows the login page     | Shows the login page          |
+| `{forceSignup: true, forceLogin: true}` | Shows the signup page    | Shows the signup page         |
+| `{silentAuth: true, forceLogin: true}`  | Type Error / Silent auth | Type Error / Silent auth      |
+| `{silentAuth: true, forceSignup: true}` | Needs testing            | Needs testing                 |
+
+
+### Adding a connection
+
+You can also specify the name of the connection configured to your application.
+
+```tsx
+// src/routes/auth/auth0.ts
+import { authenticator } from '../../auth.server';
+import type { ActionFunction } from '@remix-run/node';
+
+export const action: ActionFunction = () => {
+  authenticator.authorize({
+    connection: 'google'
+  });
+};
+```
+
+### Adding custom redirect url parameters
+
+You can also specify custom parameters to be added to the redirect url.
+
+```tsx
+// src/routes/auth/auth0.ts
+import { authenticator } from '../../auth.server';
+import type { ActionFunction } from '@remix-run/node';
+
+export const action: ActionFunction = () => {
+  authenticator.authorize({
+    callbackParams: {
+      foo: 'bar'
+    }
+  });
+};
+```
+
+### Adding a redirect url override for each authorization request
+
+You can also specify a redirect url to be used for each authorization request.
+This will override the default redirect url that you specified when you created the authenticator.
+
+```tsx
+// src/routes/auth/callback.tsx
+import { authenticator } from '../../auth.server';
+import type { ActionFunction } from '@remix-run/node';
+
+export const action: ActionFunction = async ({ request }) => {
+  await authenticator.handleCallback(request, {
+    onSuccessRedirect: '/dashboard', // change this to be wherever you want to redirect to after a successful login
+    onFailureRedirect: '/login' // change this to be wherever you want to redirect to after a failed login
+  });
+};
+```
 
 ## Errors
+
+### Authorization errors
+
+When the authorization process fails, the failure redirect url will be called with an `error` query parameter that
+contains the error code auth0 has given us.
+
+### Verification errors
 
 The verification errors each have a `code` property that you can use to determine what went wrong.
 

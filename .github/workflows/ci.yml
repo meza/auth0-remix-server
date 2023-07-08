@@ -6,6 +6,9 @@ env:
   LEFTHOOK: 0
 
 permissions:
+  issues: read
+  checks: write
+  contents: write
   pull-requests: write
 
 jobs:

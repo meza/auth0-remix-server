@@ -1,6 +1,16 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Auth0 Remix Server > handling the callback token exchange > when there is a code in the exchange > redirects to the failed login url if the token exchange fails 2`] = `
+exports[`Auth0 Remix Server > handling the callback token exchange > when there is a code in the exchange as a GET > redirects to the failed login url if the token exchange fails 2`] = `
+{
+  "body": "grant_type=authorization_code&client_id=clientId&client_secret=clientSecret&code=test-code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback",
+  "headers": {
+    "content-type": "application/x-www-form-urlencoded",
+  },
+  "method": "POST",
+}
+`;
+
+exports[`Auth0 Remix Server > handling the callback token exchange > when there is a code in the exchange as a POST > redirects to the failed login url if the token exchange fails 2`] = `
 {
   "body": "grant_type=authorization_code&client_id=clientId&client_secret=clientSecret&code=test-code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth0%2Fcallback",
   "headers": {

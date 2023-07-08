@@ -157,9 +157,25 @@ export class Auth0RemixServer {
 
   }
 
+  private async getCodeFromRequest(request: Request): Promise<string | null> {
+    try {
+      const formData = await request.formData();
+      if (formData.has('code')) {
+        return String(formData.get('code'));
+      }
+    } catch (e) {
+      const url = new URL(request.url);
+      if (url.searchParams.has('code')) {
+        return url.searchParams.get('code');
+      }
+    }
+
+    return null;
+  }
+
   public async handleCallback(request: Request, options: HandleCallbackOptions): Promise<UserCredentials> {
-    const formData = await request.formData();
-    const code = formData.get('code');
+    const code = await this.getCodeFromRequest(request);
+
     const redirectUrl = options.onFailureRedirect || this.failedLoginRedirect;
     const searchParams = new URLSearchParams();
 

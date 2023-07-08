@@ -200,8 +200,7 @@ describe('Auth0 Remix Server', () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
         const authorizer = new Auth0RemixServer(authOptions);
         const request = new Request('https://it-doesnt-matter.com', {
-          method: 'POST',
-          body: new FormData()
+          method: 'GET'
         });
 
         await expect(authorizer.handleCallback(request, {})).rejects.toThrowError(redirectError); // a redirect happened
@@ -212,7 +211,7 @@ describe('Auth0 Remix Server', () => {
         expect(consoleSpy).toHaveBeenCalledWith('No code found in callback');
       });
 
-      it<LocalTestContext>('redirects to the overriden failed login url', async ({ authOptions }) => {
+      it<LocalTestContext>('redirects to the overridden failed login url', async ({ authOptions }) => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
         const authorizer = new Auth0RemixServer(authOptions);
         const request = new Request('https://it-doesnt-matter.com', {
@@ -231,7 +230,7 @@ describe('Auth0 Remix Server', () => {
       });
     });
 
-    describe('when there is a code in the exchange', () => {
+    describe('when there is a code in the exchange as a POST', () => {
       let consoleSpy: SpyInstance;
       let authorizer: Auth0RemixServer;
       let request: Request;
@@ -245,6 +244,230 @@ describe('Auth0 Remix Server', () => {
         request = new Request('https://it-doesnt-matter.com', {
           method: 'POST',
           body: formData
+        });
+      });
+
+      it<LocalTestContext>('redirects to the failed login url if the token exchange fails', async ({ authOptions }) => {
+        vi.mocked(fetch).mockResolvedValue({
+          ok: false, // return a non-ok response
+          status: 400,
+          json: async () => ({
+            error: 'invalid_grant',
+            error_description: 'Invalid authorization code'
+          })
+        } as never);
+
+        await expect(authorizer.handleCallback(request, {})).rejects.toThrowError(redirectError); // a redirect happened
+
+        const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+        expect(redirectUrl).toEqual(authOptions.failedLoginRedirect + '?error=invalid_grant');
+
+        const fetchArgs = vi.mocked(fetch).mock.calls[0];
+        expect(fetchArgs[0]).toMatchInlineSnapshot('"https://test.domain.com/oauth/token"');
+        expect(fetchArgs[1]).toMatchSnapshot();
+        expect(consoleSpy).toHaveBeenCalledWith('Failed to get token from Auth0');
+      });
+
+      it<LocalTestContext>('redirects to the overridden failed login url if the token exchange fails', async () => {
+        vi.mocked(fetch).mockResolvedValue({
+          ok: false, // return a non-ok response
+          status: 401,
+          json: async () => ({
+            error: 'unauthorized',
+            error_description: 'Invalid authorization code again'
+          })
+        } as never);
+
+        await expect(authorizer.handleCallback(request, {
+          onFailureRedirect: '/redirected'
+        })).rejects.toThrowError(redirectError); // a redirect happened
+
+        const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+        expect(redirectUrl).toEqual('/redirected?error=unauthorized');
+      });
+
+      it<LocalTestContext>('handles auth0 failures', async () => {
+        vi.mocked(fetch).mockResolvedValue({
+          ok: false, // return a non-ok response
+          status: 500
+        } as never);
+
+        await expect(authorizer.handleCallback(request, {
+          onFailureRedirect: '/redirected'
+        })).rejects.toThrowError(redirectError); // a redirect happened
+
+        const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+        expect(redirectUrl).toEqual('/redirected?error=auth0_down');
+      });
+
+      it<LocalTestContext>('handles unknown failures', async ({ authOptions }) => {
+        vi.mocked(fetch).mockResolvedValue({
+          ok: false // return a non-ok response
+        } as never);
+
+        await expect(authorizer.handleCallback(request, {})).rejects.toThrowError(redirectError); // a redirect happened
+
+        const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+        expect(redirectUrl).toEqual(authOptions.failedLoginRedirect + '?error=unknown');
+      });
+
+      describe('and there is no success url', () => {
+        it('returns the user profile', async () => {
+          const auth0Response = {
+            access_token: 'test-access-token',
+            id_token: 'test-id-token',
+            expires_in: 30,
+            refresh_token: 'test-refresh-token'
+          };
+          vi.mocked(fetch).mockResolvedValue({
+            ok: true, // return a non-ok response
+            json: () => Promise.resolve(auth0Response)
+          } as never);
+
+          const actual = await authorizer.handleCallback(request, {});
+
+          expect(actual).toMatchInlineSnapshot(`
+            {
+              "accessToken": "test-access-token",
+              "expiresAt": 30000,
+              "expiresIn": 30,
+              "lastRefreshed": 0,
+            }
+          `);
+        });
+
+        it<LocalTestContext>('includes the refresh token if the rotation is set', async ({ authOptions }) => {
+          authOptions.refreshTokenRotationEnabled = true;
+          authorizer = new Auth0RemixServer(authOptions);
+          const auth0Response = {
+            access_token: 'test-access-token2',
+            id_token: 'test-id-token2',
+            expires_in: 600,
+            refresh_token: 'test-refresh-token2'
+          };
+
+          vi.mocked(fetch).mockResolvedValue({
+            ok: true, // return a non-ok response
+            json: () => Promise.resolve(auth0Response)
+          } as never);
+
+          const actual = await authorizer.handleCallback(request, {});
+
+          expect(actual).toMatchInlineSnapshot(`
+            {
+              "accessToken": "test-access-token2",
+              "expiresAt": 600000,
+              "expiresIn": 600,
+              "lastRefreshed": 0,
+              "refreshToken": "test-refresh-token2",
+            }
+          `);
+        });
+      });
+
+      describe('and there is a success url', () => {
+        it<LocalTestContext>('redirects to the success url', async ({ authOptions }) => {
+          authOptions.session = {
+            store: 'sessionStore',
+            key: 'sessionKey'
+          } as never;
+          const auth0Response = {
+            access_token: 'test-access-token3',
+            id_token: 'test-id-token3',
+            expires_in: 300,
+            refresh_token: 'test-refresh-token3'
+          };
+          vi.mocked(fetch).mockResolvedValue({
+            ok: true, // return a non-ok response
+            json: () => Promise.resolve(auth0Response)
+          } as never);
+
+          vi.mocked(saveUserToSession).mockResolvedValue({
+            'some-cookie': 'data'
+          });
+
+          const authorizer = new Auth0RemixServer(authOptions);
+          await expect(authorizer.handleCallback(request, {
+            onSuccessRedirect: 'https://success-login-redirect.com'
+          })).rejects.toThrowError(redirectError); // a redirect happened
+
+          const saveUserToSessionArgs = vi.mocked(saveUserToSession).mock.calls[0];
+          expect(saveUserToSessionArgs[0]).toBe(request);
+          expect(saveUserToSessionArgs[2]).toEqual(authOptions.session);
+          expect(saveUserToSessionArgs[1]).toMatchInlineSnapshot(`
+            {
+              "accessToken": "test-access-token3",
+              "expiresAt": 300000,
+              "expiresIn": 300,
+              "lastRefreshed": 0,
+            }
+          `);
+
+          const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+          expect(redirectUrl).toEqual('https://success-login-redirect.com');
+
+          const redirectInit = vi.mocked(redirect).mock.calls[0][1];
+          expect(redirectInit).toMatchInlineSnapshot(`
+            {
+              "headers": {
+                "some-cookie": "data",
+              },
+            }
+          `);
+
+        });
+
+        it<LocalTestContext>('calls the token escape hatch', async ({ authOptions }) => {
+          const escapeHatch = vi.fn();
+
+          authOptions.session = {
+            store: 'sessionStore',
+            key: 'sessionKey'
+          } as never;
+          authOptions.credentialsCallback = escapeHatch;
+          const auth0Response = {
+            access_token: 'test-access-token4',
+            id_token: 'test-id-token4',
+            expires_in: 600,
+            refresh_token: 'test-refresh-token4'
+          };
+
+          vi.mocked(fetch).mockResolvedValue({
+            ok: true, // return a non-ok response
+            json: () => Promise.resolve(auth0Response)
+          } as never);
+
+          vi.mocked(saveUserToSession).mockResolvedValue({
+            'some-cookie': 'data'
+          });
+
+          const authorizer = new Auth0RemixServer(authOptions);
+          await expect(authorizer.handleCallback(request, {
+            onSuccessRedirect: 'https://success-login-redirect.com'
+          })).rejects.toThrowError(redirectError); // a redirect happened
+
+          expect(escapeHatch).toHaveBeenCalledWith({
+            accessToken: 'test-access-token4',
+            refreshToken: 'test-refresh-token4',
+            expiresIn: 600,
+            lastRefreshed: 0,
+            expiresAt: 600000
+          });
+        });
+      });
+    });
+
+    describe('when there is a code in the exchange as a GET', () => {
+      let consoleSpy: SpyInstance;
+      let authorizer: Auth0RemixServer;
+      let request: Request;
+
+      beforeEach<LocalTestContext>(({ authOptions }) => {
+        consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        authorizer = new Auth0RemixServer(authOptions);
+
+        request = new Request('https://it-doesnt-matter.com?code=test-code', {
+          method: 'GET'
         });
       });
 

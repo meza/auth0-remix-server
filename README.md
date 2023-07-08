@@ -61,7 +61,8 @@ export const authenticator = new Auth0RemixServer({
   clientDetails: {
     domain: process.env.AUTH0_DOMAIN,
     clientID: process.env.AUTH0_CLIENT_ID,
-    clientSecret: process.env.AUTH0_CLIENT_SECRET
+    clientSecret: process.env.AUTH0_CLIENT_SECRET,
+    usePost: true // optional, defaults to true
   },
   callbackURL: `${process.env.APP_DOMAIN}/auth/callback`,
   refreshTokenRotationEnabled: true,

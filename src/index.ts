@@ -63,7 +63,8 @@ export class Auth0RemixServer {
       clientID: auth0RemixOptions.clientDetails.clientID,
       clientSecret: auth0RemixOptions.clientDetails.clientSecret,
       audience: auth0RemixOptions.clientDetails.audience || `${this.domain}/api/v2/`,
-      organization: auth0RemixOptions.clientDetails.organization
+      organization: auth0RemixOptions.clientDetails.organization,
+      usePost: auth0RemixOptions.clientDetails.usePost
     };
     this.session = {
       store: auth0RemixOptions.session.store,
@@ -105,12 +106,6 @@ export class Auth0RemixServer {
   }
 
   public authorize(opts: AuthorizeOptions = {}) {
-    const scope = [
-      'offline_access', // required for refresh token
-      'openid', // required for id_token and the /userinfo api endpoint
-      'profile',
-      'email'
-    ];
 
     const cbUrl = new URL(this.callbackURL);
     if (opts.callbackParams) {
@@ -120,10 +115,28 @@ export class Auth0RemixServer {
     }
 
     const authorizationURL = new URL(this.auth0Urls.authorizationURL);
-    authorizationURL.searchParams.set('response_type', 'code');
-    authorizationURL.searchParams.set('response_mode', 'form_post');
-    authorizationURL.searchParams.set('client_id', this.clientCredentials.clientID);
     authorizationURL.searchParams.set('redirect_uri', cbUrl.toString());
+
+    this.setAuthorizationParameters(authorizationURL, opts);
+
+    throw redirect(authorizationURL.toString());
+  }
+
+  private setAuthorizationParameters(authorizationURL: URL, opts: AuthorizeOptions = {}) {
+    const scope = [
+      'offline_access', // required for refresh token
+      'openid', // required for id_token and the /userinfo api endpoint
+      'profile',
+      'email'
+    ];
+
+    authorizationURL.searchParams.set('response_type', 'code');
+
+    if (this.clientCredentials.usePost !== false) {
+      authorizationURL.searchParams.set('response_mode', 'form_post');
+    }
+
+    authorizationURL.searchParams.set('client_id', this.clientCredentials.clientID);
     authorizationURL.searchParams.set('scope', scope.join(' '));
     authorizationURL.searchParams.set('audience', this.clientCredentials.audience);
     if (this.clientCredentials.organization) {
@@ -142,7 +155,6 @@ export class Auth0RemixServer {
       authorizationURL.searchParams.set('connection', opts.connection);
     }
 
-    throw redirect(authorizationURL.toString());
   }
 
   public async handleCallback(request: Request, options: HandleCallbackOptions): Promise<UserCredentials> {

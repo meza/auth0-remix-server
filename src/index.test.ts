@@ -64,6 +64,35 @@ describe('Auth0 Remix Server', () => {
       expect(redirectUrl).toMatchSnapshot();
     });
 
+    it<LocalTestContext>('uses post when post is not set', ({ authOptions }) => {
+      const authorizer = new Auth0RemixServer(authOptions);
+
+      expect(() => authorizer.authorize()).toThrowError(redirectError); // a redirect happened
+
+      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+      expect(redirectUrl).toContain('response_mode=form_post');
+    });
+
+    it<LocalTestContext>('uses post when post is set to true', ({ authOptions }) => {
+      authOptions.clientDetails.usePost = true;
+      const authorizer = new Auth0RemixServer(authOptions);
+
+      expect(() => authorizer.authorize()).toThrowError(redirectError); // a redirect happened
+
+      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+      expect(redirectUrl).toContain('response_mode=form_post');
+    });
+
+    it<LocalTestContext>('uses get when post is set to false', ({ authOptions }) => {
+      authOptions.clientDetails.usePost = false;
+      const authorizer = new Auth0RemixServer(authOptions);
+
+      expect(() => authorizer.authorize()).toThrowError(redirectError); // a redirect happened
+
+      const redirectUrl = vi.mocked(redirect).mock.calls[0][0];
+      expect(redirectUrl).not.toContain('response_mode=form_post');
+    });
+
     it<LocalTestContext>('forces the login if asked', ({ authOptions }) => {
       const authorizer = new Auth0RemixServer(authOptions);
 

@@ -63,6 +63,7 @@ export interface ClientCredentials {
   clientSecret: string;
   audience: string;
   organization?: string | undefined;
+  usePost?: boolean | undefined;
 }
 
 export interface SessionStore {

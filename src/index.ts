@@ -8,19 +8,24 @@ import type {
   Auth0CredentialsCallback,
   Auth0RemixOptions,
   Auth0UserProfile,
+  AuthorizeOptions,
   ClientCredentials,
   HandleCallbackOptions,
   SessionStore,
-  UserCredentials,
-  UserProfile,
   TokenError,
-  AuthorizeOptions
+  UserCredentials,
+  UserProfile
 } from './Auth0RemixTypes.js';
 import type { AppLoadContext } from '@remix-run/server-runtime';
 
 export enum Token {
   ID = 'id',
   ACCESS = 'access'
+}
+
+export enum SessionStrategy {
+  Browser = 'browser',
+  Server = 'server'
 }
 
 interface Auth0Urls {
@@ -68,7 +73,8 @@ export class Auth0RemixServer {
     };
     this.session = {
       store: auth0RemixOptions.session.store,
-      key: auth0RemixOptions.session.key || 'user'
+      key: auth0RemixOptions.session.key || 'user',
+      strategy: auth0RemixOptions.session.strategy || SessionStrategy.Browser
     };
     this.auth0Urls = {
       tokenURL: `${this.domain}/oauth/token`,
@@ -254,11 +260,21 @@ export class Auth0RemixServer {
     } catch (error) {
       if ((error as TokenError).code === 'ERR_JWT_EXPIRED') {
         if (!context.refresh) {
-          context.refresh = this.refreshCredentials(credentials);
-          const result = (await context.refresh) as UserCredentials;
-          const headers = await saveUserToSession(request, result, this.session);
-          throw redirect(request.url, {
-            headers: headers
+          context.refresh = new Promise<void>((resolve, reject) => {
+            setTimeout(async () => {
+              try {
+                const result = (await this.refreshCredentials(credentials)) as UserCredentials;
+                const headers = await saveUserToSession(request, result, this.session);
+                if (this.session.strategy === SessionStrategy.Browser) {
+                  throw redirect(request.url, {
+                    headers: headers
+                  });
+                }
+                resolve();
+              } catch (err) {
+                reject(err);
+              }
+            }, 0);
           });
         }
 

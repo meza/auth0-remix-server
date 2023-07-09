@@ -1,3 +1,4 @@
+import { SessionStrategy } from './index.js';
 import type { SessionStorage } from '@remix-run/server-runtime';
 import type { Camelize } from 'camelize-ts';
 import type { JsonObject, JsonValue, SetOptional } from 'type-fest';
@@ -69,6 +70,7 @@ export interface ClientCredentials {
 export interface SessionStore {
   key: string;
   store: SessionStorage;
+  strategy?: SessionStrategy;
 }
 
 export interface Auth0RemixOptions {

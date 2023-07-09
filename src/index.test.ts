@@ -2,6 +2,7 @@
 import { redirect } from '@remix-run/server-runtime';
 import * as jose from 'jose';
 import { afterEach, beforeEach, describe, expect, it, SpyInstance, vi } from 'vitest';
+import { SessionStrategy } from './Auth0RemixTypes.js';
 import { getCredentials, saveUserToSession } from './lib/session.js';
 import { Auth0RemixServer, Token } from './index.js';
 import type { Auth0RemixOptions } from './Auth0RemixTypes.js';
@@ -369,7 +370,8 @@ describe('Auth0 Remix Server', () => {
         it<LocalTestContext>('redirects to the success url', async ({ authOptions }) => {
           authOptions.session = {
             store: 'sessionStore',
-            key: 'sessionKey'
+            key: 'sessionKey',
+            strategy: SessionStrategy.Server
           } as never;
           const auth0Response = {
             access_token: 'test-access-token3',
@@ -593,7 +595,8 @@ describe('Auth0 Remix Server', () => {
         it<LocalTestContext>('redirects to the success url', async ({ authOptions }) => {
           authOptions.session = {
             store: 'sessionStore',
-            key: 'sessionKey'
+            key: 'sessionKey',
+            strategy: SessionStrategy.Browser
           } as never;
           const auth0Response = {
             access_token: 'test-access-token3',
@@ -741,7 +744,8 @@ describe('Auth0 Remix Server', () => {
         it<LocalTestContext>('returns the user', async ({ authOptions }) => {
           authOptions.session = {
             store: 'sessionStore',
-            key: 'sessionKey'
+            key: 'sessionKey',
+            strategy: SessionStrategy.Browser
           } as never;
 
           const user = {
@@ -899,7 +903,8 @@ describe('Auth0 Remix Server', () => {
             authOptions.refreshTokenRotationEnabled = false;
             authOptions.session = {
               store: 'sessionStore',
-              key: 'sessionKey'
+              key: 'sessionKey',
+              strategy: SessionStrategy.Browser
             } as never;
             const authorizer = new Auth0RemixServer(authOptions);
 
@@ -989,6 +994,63 @@ describe('Auth0 Remix Server', () => {
               }
             `);
             expect(Object.keys(saveUserToSessionCall[1])).toContain('refreshToken');
+
+          });
+
+          it<LocalTestContext>('does not redirect with the server strategy enabled', async ({ authOptions, appLoadContext }) => {
+            vi.mocked(jose.jwtVerify).mockResolvedValueOnce({} as never);
+            vi.mocked(fetch).mockResolvedValueOnce({
+              ok: true,
+              json: () => Promise.resolve({
+                access_token: 'new-access-token2',
+                refresh_token: 'new-refresh-token2',
+                expires_in: 3000
+              })
+            } as never);
+
+            const user = {
+              name: 'test-user',
+              first_name: 'test-first-name'
+            };
+
+            vi.mocked(fetch).mockResolvedValueOnce({
+              ok: true,
+              json: () => Promise.resolve(user)
+            } as never);
+
+            vi.mocked(saveUserToSession).mockResolvedValueOnce({
+              'a-header2': 'a-value2'
+            } as never);
+
+            const request = new Request('https://it-doesnt-matter.com');
+            authOptions.refreshTokenRotationEnabled = true;
+            authOptions.session.strategy = SessionStrategy.Server;
+            const authorizer = new Auth0RemixServer(authOptions);
+
+            /** Execute the test */
+            const actual = await authorizer.getUser(request, appLoadContext);
+
+            expect(appLoadContext.refresh).toBeDefined(); // it sets the context properly
+
+            /**
+             * It updates the session correctly
+             * And it contains the refresh token
+             */
+            const saveUserToSessionCall = vi.mocked(saveUserToSession).mock.calls[0];
+            expect(saveUserToSessionCall[1]).toEqual(
+              {
+                'accessToken': 'new-access-token2',
+                'expiresAt': 3000000,
+                'expiresIn': 3000,
+                'lastRefreshed': 0,
+                'refreshToken': 'new-refresh-token2'
+              }
+            );
+            expect(Object.keys(saveUserToSessionCall[1])).toContain('refreshToken');
+            expect(actual).toEqual({
+              'firstName': 'test-first-name',
+              'name': 'test-user'
+            });
 
           });
 

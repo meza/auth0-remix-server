@@ -66,9 +66,15 @@ export interface ClientCredentials {
   usePost?: boolean | undefined;
 }
 
+export enum SessionStrategy {
+  Browser = 'browser',
+  Server = 'server'
+}
+
 export interface SessionStore {
   key: string;
   store: SessionStorage;
+  strategy?: SessionStrategy;
 }
 
 export interface Auth0RemixOptions {

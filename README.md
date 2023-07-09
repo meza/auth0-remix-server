@@ -166,8 +166,25 @@ export default () => {
   );
 };
 
-
 ```
+
+### Session Storage Strategies
+
+#### Keeping the session data in the cookie
+
+The authenticator uses a session strategy to determine how to handle the case of refreshing the tokens.
+The default setting `SessionStrategy.Browser` assumes that you store all your tokens in a cookie and that
+you need to send the browser cookie headers whenever you refresh the tokens.
+This results in a literal page refresh, which is not ideal.
+
+> :note: This is most likely NOT going to be your use case.
+
+#### Keeping the session data in a database
+
+Ideally you will only store the session id in the cookie and leave the session data to be stored in a database.
+This is where the `SessionStrategy.Server` comes in. It assumes that you have a session id stored in a cookie
+and that once the ID is set upon login, you will be able to retrieve - and update - the session data from a database.
+
 
 ## Securely decoding tokens
 

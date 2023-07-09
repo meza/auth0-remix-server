@@ -1,6 +1,5 @@
 import { redirect } from '@remix-run/server-runtime';
 import * as jose from 'jose';
-import { SessionStrategy } from './Auth0RemixTypes.js';
 import { ensureDomain } from './lib/ensureDomainFormat.js';
 import { getCredentials, saveUserToSession } from './lib/session.js';
 import { transformUserData } from './lib/transformUserData.js';
@@ -22,6 +21,11 @@ import type { AppLoadContext } from '@remix-run/server-runtime';
 export enum Token {
   ID = 'id',
   ACCESS = 'access'
+}
+
+export enum SessionStrategy {
+  Browser = 'browser',
+  Server = 'server'
 }
 
 interface Auth0Urls {

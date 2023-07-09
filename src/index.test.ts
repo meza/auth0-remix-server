@@ -2,9 +2,8 @@
 import { redirect } from '@remix-run/server-runtime';
 import * as jose from 'jose';
 import { afterEach, beforeEach, describe, expect, it, SpyInstance, vi } from 'vitest';
-import { SessionStrategy } from './Auth0RemixTypes.js';
 import { getCredentials, saveUserToSession } from './lib/session.js';
-import { Auth0RemixServer, Token } from './index.js';
+import { Auth0RemixServer, Token, SessionStrategy } from './index.js';
 import type { Auth0RemixOptions } from './Auth0RemixTypes.js';
 import type { AppLoadContext } from '@remix-run/server-runtime';
 

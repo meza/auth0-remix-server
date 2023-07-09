@@ -1,3 +1,4 @@
+import { SessionStrategy } from './index.js';
 import type { SessionStorage } from '@remix-run/server-runtime';
 import type { Camelize } from 'camelize-ts';
 import type { JsonObject, JsonValue, SetOptional } from 'type-fest';
@@ -64,11 +65,6 @@ export interface ClientCredentials {
   audience: string;
   organization?: string | undefined;
   usePost?: boolean | undefined;
-}
-
-export enum SessionStrategy {
-  Browser = 'browser',
-  Server = 'server'
 }
 
 export interface SessionStore {

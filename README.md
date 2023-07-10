@@ -170,6 +170,19 @@ export default () => {
 
 ### Session Storage Strategies
 
+When you're constructing the authorizer, you can customize how the library behaves when refreshing the tokens.
+
+```ts
+// src/auth.server.ts
+...
+  session: {
+    store: getSessionStorage(),
+    strategy: SessionStrategy.Browser,  // <----- This line here
+    key: 'user' //optional
+  },
+...
+```
+
 #### Keeping the session data in the cookie
 
 The authenticator uses a session strategy to determine how to handle the case of refreshing the tokens.

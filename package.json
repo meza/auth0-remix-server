@@ -68,7 +68,7 @@
     "@commitlint/cli": "17.6.6",
     "@commitlint/config-conventional": "17.6.6",
     "@commitlint/prompt-cli": "17.6.6",
-    "@evilmartians/lefthook": "1.4.5",
+    "@evilmartians/lefthook": "1.4.6",
     "@meza/tsconfig-base": "1.1.0",
     "@semantic-release/commit-analyzer": "10.0.1",
     "@semantic-release/github": "9.0.4",

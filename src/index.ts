@@ -8,7 +8,7 @@ import type {
   Auth0CredentialsCallback,
   Auth0RemixOptions,
   Auth0UserProfile,
-  AuthorizeOptions,
+  AuthorizeOptions, CacheGetFunction, CacheSetFunction,
   ClientCredentials,
   HandleCallbackOptions,
   SessionStore,
@@ -38,6 +38,10 @@ interface Auth0Urls {
 
 const noop = () => { /* empty */ };
 
+const defaultCacheGet = () => {
+  throw new Error();
+};
+
 export class Auth0RemixServer {
   private readonly domain: string;
   private readonly refreshTokenRotationEnabled: boolean;
@@ -48,7 +52,10 @@ export class Auth0RemixServer {
   private readonly session: SessionStore;
   private readonly auth0Urls: Auth0Urls;
   private readonly credentialsCallback: Auth0CredentialsCallback;
+  private readonly cacheGet: CacheGetFunction;
+  private readonly cacheSet: CacheSetFunction;
 
+  // eslint-disable-next-line complexity -- it's only simple parameter initialization
   constructor(auth0RemixOptions: Auth0RemixOptions) {
     this.domain = ensureDomain(auth0RemixOptions.clientDetails.domain);
 
@@ -83,6 +90,9 @@ export class Auth0RemixServer {
       jwksURL: `${this.domain}/.well-known/jwks.json`,
       openIDConfigurationURL: `${this.domain}/.well-known/openid-configuration`
     };
+
+    this.cacheGet = auth0RemixOptions.profileCacheGet || defaultCacheGet;
+    this.cacheSet = auth0RemixOptions.profileCacheSet || noop as unknown as CacheSetFunction;
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     this.credentialsCallback = auth0RemixOptions.credentialsCallback || noop;
@@ -329,22 +339,30 @@ export class Auth0RemixServer {
   }
 
   private async getUserProfile(credentials: UserCredentials): Promise<UserProfile> {
-    const response = await fetch(this.auth0Urls.userProfileUrl, {
-      headers: {
-        Authorization: `Bearer ${credentials.accessToken}`
+    try {
+      return await this.cacheGet(credentials.accessToken);
+    } catch (e) {
+      const response = await fetch(this.auth0Urls.userProfileUrl, {
+        headers: {
+          Authorization: `Bearer ${credentials.accessToken}`
+        }
+      });
+
+      const searchParams = new URLSearchParams();
+
+      if (!response.ok) {
+        console.error('Failed to get user profile from Auth0');
+        searchParams.set('error', await this.getErrorReason(response));
+        throw redirect(this.failedLoginRedirect.concat('?', searchParams.toString()));
       }
-    });
 
-    const searchParams = new URLSearchParams();
+      const data = (await response.json()) as Auth0UserProfile;
+      const profile = await transformUserData(data);
 
-    if (!response.ok) {
-      console.error('Failed to get user profile from Auth0');
-      searchParams.set('error', await this.getErrorReason(response));
-      throw redirect(this.failedLoginRedirect.concat('?', searchParams.toString()));
+      await this.cacheSet(credentials.accessToken, profile, credentials.expiresAt);
+
+      return profile;
     }
-
-    const data = (await response.json()) as Auth0UserProfile;
-    return transformUserData(data);
   }
 
   private async getErrorReason(response: Response): Promise<string> {

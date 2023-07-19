@@ -9,6 +9,9 @@
   "baseBranches": [
     "main"
   ],
+  "npm": {
+    "minimumReleaseAge": "3 days"
+  },
   "semanticCommits": "enabled",
   "semanticCommitType": "chore",
   "rangeStrategy": "pin",
@@ -57,15 +60,19 @@
     },
     {
       "matchDepTypes": [
-        "engines"
+        "peerDependencies"
       ],
-      "automerge": false,
-      "rangeStrategy": "widen"
+      "semanticCommitType": "fix",
+      "versionStrategy": "widen",
+      "automerge": true,
+      "platformAutomerge": true
     },
     {
       "matchDepTypes": [
         "engines"
       ],
+      "automerge": true,
+      "platformAutomerge": true,
       "rangeStrategy": "widen"
     }
   ],

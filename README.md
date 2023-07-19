@@ -198,6 +198,33 @@ Ideally you will only store the session id in the cookie and leave the session d
 This is where the `SessionStrategy.Server` comes in. It assumes that you have a session id stored in a cookie
 and that once the ID is set upon login, you will be able to retrieve - and update - the session data from a database.
 
+### Caching the user profile
+
+Unfortunately with the current implementation of Remix and the lack of a proper middleware, every loader runs in parallel,
+and they can generate a lot of noise towards Auth0.
+
+In this situation you might want to have some sort of a "user profile caching" in place. Redis, Dyanmo, in-memory, you name it.
+
+The `auth0-remix-server` offers you a way to do this.
+
+```ts
+// src/auth.server.ts
+import {Auth0RemixServer} from 'auth0-remix-server';
+import {getSessionStorage} from './sessionStorage.server';
+import {UserProfile} from "./Auth0RemixTypes"; // this is where your session storage is configured
+
+export const authenticator = new Auth0RemixServer({
+  ...,
+  profileCacheGet: async (accessToken: string): Promise<UserProfile> => {
+      //return a UserProfile or throw an error if not found
+  },
+  profileCacheSet: async (accessToken: string, profile: UserProfile, expiresAt: number): Promise<void> => {
+    // use the expiresAt as a TTL value if your cache storage supports such a thing.
+    // Otherwise use it to invalidate the record yourself.
+  },
+  ...,
+});
+```
 
 ## Securely decoding tokens
 

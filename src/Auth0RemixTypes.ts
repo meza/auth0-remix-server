@@ -73,6 +73,9 @@ export interface SessionStore {
   strategy?: SessionStrategy;
 }
 
+export type CacheGetFunction = (accessToken: string) => Promise<UserProfile>;
+export type CacheSetFunction = (accessToken: string, profile: UserProfile, expiresAt: number) => Promise<void>;
+
 export interface Auth0RemixOptions {
   callbackURL: string;
   failedLoginRedirect: string;
@@ -80,6 +83,8 @@ export interface Auth0RemixOptions {
   clientDetails: SetOptional<ClientCredentials, 'audience'> & { domain: string };
   session: SetOptional<SessionStore, 'key'>;
   credentialsCallback?: Auth0CredentialsCallback;
+  profileCacheGet?: CacheGetFunction;
+  profileCacheSet?: CacheSetFunction;
 }
 
 interface BaseAuthorizeOptions {

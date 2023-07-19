@@ -734,9 +734,69 @@ describe('Auth0 Remix Server', () => {
     describe('when the access token is valid', () => {
       beforeEach(() => {
         vi.mocked(getCredentials).mockResolvedValueOnce({
-          accessToken: 'test-access-token'
+          accessToken: 'test-access-token',
+          expiresAt: 66669420
         } as never);
         vi.mocked(jose.jwtVerify).mockResolvedValue({} as never);
+      });
+
+      describe('and there is a user cache in place', () => {
+        beforeEach<LocalTestContext>((context) => {
+          context.authOptions.profileCacheGet = vi.fn();
+        });
+
+        it<LocalTestContext>('returns the cached result', async ({ authOptions }) => {
+          vi.mocked(authOptions.profileCacheGet!).mockResolvedValue({
+            email: 'test@email.here'
+          } as never);
+
+          const request = new Request('https://it-doesnt-matter.com');
+
+          const authorizer = new Auth0RemixServer(authOptions);
+          const actual = await authorizer.getUser(request, {});
+
+          expect(actual.email).toEqual('test@email.here');
+          expect(authOptions.profileCacheGet).toHaveBeenCalledWith('test-access-token');
+        });
+
+        describe('when the cache misses', () => {
+          it<LocalTestContext>('calls out to auth0', async ({ authOptions }) => {
+            authOptions.profileCacheSet = vi.fn();
+            vi.mocked(authOptions.profileCacheGet!).mockRejectedValueOnce(new Error('Cache miss'));
+
+            authOptions.session = {
+              store: 'sessionStore',
+              key: 'sessionKey',
+              strategy: SessionStrategy.Browser
+            } as never;
+
+            const user = {
+              name: 'test-user',
+              first_name: 'test-first-name'
+            };
+
+            vi.mocked(fetch).mockResolvedValue({
+              ok: true,
+              json: () => Promise.resolve(user)
+            } as never);
+
+            const request = new Request('https://it-doesnt-matter.com');
+
+            const authorizer = new Auth0RemixServer(authOptions);
+            const actual = await authorizer.getUser(request, {});
+
+            expect(actual.firstName).toEqual('test-first-name');
+            expect(actual.name).toEqual('test-user');
+
+            const fetchParams = vi.mocked(fetch).mock.calls[0];
+            expect(fetchParams[0]).toEqual('https://test.domain.com/userinfo');
+
+            expect(authOptions.profileCacheSet).toHaveBeenCalledWith('test-access-token', {
+              firstName: 'test-first-name',
+              name: 'test-user'
+            }, 66669420);
+          });
+        });
       });
 
       describe('and the user profile fetch succeeds', () => {

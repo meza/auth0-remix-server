@@ -135,6 +135,6 @@
   },
   "dependencies": {
     "camelize-ts": "3.0.0",
-    "jose": "4.15.3"
+    "jose": "4.15.4"
   }
 }

@@ -94,7 +94,7 @@
     "npmignore": "0.3.0",
     "publint": "0.2.5",
     "rimraf": "5.0.5",
-    "semantic-release": "22.0.6",
+    "semantic-release": "22.0.7",
     "semantic-release-export-data": "1.0.1",
     "type-fest": "4.6.0",
     "typescript": "5.1.6",

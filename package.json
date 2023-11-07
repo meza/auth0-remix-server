@@ -74,7 +74,7 @@
     "@semantic-release/commit-analyzer": "11.0.0",
     "@semantic-release/github": "9.2.1",
     "@semantic-release/npm": "11.0.1",
-    "@semantic-release/release-notes-generator": "12.0.0",
+    "@semantic-release/release-notes-generator": "12.0.1",
     "@total-typescript/ts-reset": "0.5.1",
     "@types/is-ci": "3.0.3",
     "@types/node": "18.18.8",

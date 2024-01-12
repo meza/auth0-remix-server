@@ -21,20 +21,13 @@ export default defineConfig({
     cache: {
       dir: '.cache/.vitest'
     },
-    deps: {
-      fallbackCJS: true
-    },
     dir: 'src',
     testTimeout: 10000,
     watch: false,
-    maxThreads: 1,
-    minThreads: 1,
     outputFile: 'reports/junit.xml',
     reporters: testReporters,
     coverage: {
-      // excludeNodeModules: true,
-      src: ['src'],
-      include: ['**/*.ts', '**/*.tsx'],
+      include: ['src/**/*.ts', 'src/**/*.tsx'],
       exclude: [
         '**/__mocks__/**.*',
         '**/*.d.ts',
@@ -48,10 +41,12 @@ export default defineConfig({
       all: true,
       reportsDirectory: './reports/coverage/unit',
       reporter: coverageReporters,
-      statements: 100,
-      branches: 100,
-      functions: 100,
-      lines: 100
+      thresholds: {
+        statements: 100,
+        branches: 100,
+        functions: 100,
+        lines: 100
+      }
     }
   },
   resolve: {

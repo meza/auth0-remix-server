@@ -116,7 +116,7 @@
     "node": ">=16"
   },
   "peerDependencies": {
-    "@remix-run/server-runtime": "2.4.1"
+    "@remix-run/server-runtime": "2.5.0"
   },
   "peerDependenciesMeta": {
     "@remix-run/server-runtime": {

@@ -80,7 +80,7 @@
     "@types/node": "20.11.5",
     "@typescript-eslint/eslint-plugin": "6.19.0",
     "@typescript-eslint/parser": "6.19.0",
-    "@vitest/coverage-v8": "1.2.0",
+    "@vitest/coverage-v8": "1.2.1",
     "convert-extension": "0.3.0",
     "eslint": "8.56.0",
     "eslint-config-tailored-tunes": "5.0.2",
@@ -98,7 +98,7 @@
     "type-fest": "4.9.0",
     "typescript": "5.3.3",
     "vite": "5.0.11",
-    "vitest": "1.2.0"
+    "vitest": "1.2.1"
   },
   "commitlint": {
     "extends": [

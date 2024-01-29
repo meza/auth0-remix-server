@@ -66,9 +66,9 @@
   "types": "./dist/types/index.d.ts",
   "type": "module",
   "devDependencies": {
-    "@commitlint/cli": "18.4.4",
-    "@commitlint/config-conventional": "18.4.4",
-    "@commitlint/prompt-cli": "18.4.4",
+    "@commitlint/cli": "18.5.0",
+    "@commitlint/config-conventional": "18.5.0",
+    "@commitlint/prompt-cli": "18.5.0",
     "@evilmartians/lefthook": "1.6.0",
     "@meza/tsconfig-base": "1.1.0",
     "@semantic-release/commit-analyzer": "11.1.0",

@@ -113,7 +113,7 @@
     }
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "peerDependencies": {
     "@remix-run/server-runtime": ">=2.6.0"

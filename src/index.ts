@@ -16,6 +16,7 @@ import type {
   UserCredentials,
   UserProfile
 } from './Auth0RemixTypes.js';
+export * from './Auth0RemixTypes.js';
 import type { AppLoadContext } from '@remix-run/server-runtime';
 
 export enum Token {

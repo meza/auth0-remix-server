@@ -6,6 +6,7 @@
     "preserveSymlinks": false,
     "target": "ES2020",
     "module": "NodeNext",
+    "declaration": true,
     "moduleResolution": "NodeNext",
     "emitDeclarationOnly": false,
     "skipDefaultLibCheck": true,

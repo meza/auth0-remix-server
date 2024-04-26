@@ -25,6 +25,7 @@
     "build": "run-s build:cjs build:mjs",
     "build:cjs": "tsc -p ./tsconfig.cjs.build.json && convert-extension cjs ./dist/cjs",
     "build:mjs": "tsc -p tsconfig.build.json",
+    "build:types": "tsc -p tsconfig.build.json --declaration --out ./dist/types/index.d.ts",
     "ci": "run-s lint report",
     "clean": "rimraf ./dist .cache .npmignore",
     "lint": "run-p lint:*",

@@ -22,7 +22,7 @@ jobs:
       junit-report-path: "reports/junit.xml"
       cobertura-report-path: "reports/**/cobertura-coverage.xml"
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [ verify ]
     name: Build
     steps:

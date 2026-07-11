@@ -6,7 +6,7 @@ env:
   LEFTHOOK: 0
 
 permissions:
-  issues: read
+  issues: write
   checks: write
   contents: write
   pull-requests: write
@@ -15,7 +15,7 @@ jobs:
   verify:
     uses: meza/shared-github-workflows/.github/workflows/default-node-npm-ci.yml@main
     secrets:
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     with:
       node-version: "latest"
@@ -40,6 +40,6 @@ jobs:
       - name: 🚀 Release
         if: needs.verify.outputs.new-release-published == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm run release
